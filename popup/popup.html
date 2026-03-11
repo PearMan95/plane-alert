@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Plane Alert</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="header">
+  <div class="header-icon">✈️</div>
+  <div class="header-title">Plane<span>Alert</span></div>
+  <div class="master-toggle" style="margin-left:auto">
+    <span class="master-toggle-label" id="masterLabel">off</span>
+    <div class="toggle-pill" id="masterToggle"></div>
+  </div>
+  <div class="status-dot">
+    <div class="dot" id="statusDot"></div>
+    <span id="statusText">inactive</span>
+  </div>
+  <button class="btn-help" id="btnHelp">?</button>
+</div>
+
+<!-- ── Help overlay ── -->
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-box">
+    <div class="help-header">
+      <span>Help</span>
+      <button class="help-close" id="helpClose">✕</button>
+    </div>
+    <div class="help-content">
+
+      <div class="help-section">
+        <div class="help-title">How it works</div>
+        <p>Plane Alert polls the <strong>airplanes.live</strong> API in the background. When an aircraft matching one of your alerts enters your radius for the first time, you get a desktop notification. You only get one notification per aircraft per visit — once it leaves your radius and comes back, you'll be notified again. Use the <strong>on/off toggle</strong> in the header to pause and resume tracking at any time.</p>
+      </div>
+
+      <div class="help-section">
+        <div class="help-title">Alert types</div>
+        <div class="help-table">
+          <div class="help-row"><span class="help-key">Registration</span><span>Tail number, e.g. <code>PH-BXA</code></span></div>
+          <div class="help-row"><span class="help-key">Flight no.</span><span>Flight number, e.g. <code>KL1234</code>. Partial match from the start.</span></div>
+          <div class="help-row"><span class="help-key">Aircraft type</span><span>ICAO type code, e.g. <code>B744</code>, <code>F16</code>, <code>A320</code></span></div>
+          <div class="help-row"><span class="help-key">Airline</span><span>3-letter ICAO airline code, e.g. <code>KLM</code>, <code>TRA</code>, <code>EZY</code></span></div>
+          <div class="help-row"><span class="help-key">ICAO hex</span><span>24-bit ICAO address, e.g. <code>484506</code></span></div>
+          <div class="help-row"><span class="help-key">DB Flag</span><span>Alert on a category of aircraft (see below)</span></div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-title">DB Flags</div>
+        <div class="help-table">
+          <div class="help-row"><span class="help-key">🪖 Military</span><span>Aircraft in military databases</span></div>
+          <div class="help-row"><span class="help-key">⭐ Interesting</span><span>Rare or notable aircraft flagged by the community</span></div>
+          <div class="help-row"><span class="help-key">🔒 PIA</span><span>Privacy ICAO Address — registration is intentionally hidden</span></div>
+          <div class="help-row"><span class="help-key">📵 LADD</span><span>Limiting Aircraft Data Displayed — operator has opted out of tracking</span></div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-title">Live tab</div>
+        <div class="help-table">
+          <div class="help-row"><span class="help-key">Refresh</span><span>Fetches a fresh snapshot. Has a 20-second cooldown to avoid rate limits.</span></div>
+          <div class="help-row"><span class="help-key">Sort</span><span>Order by distance, altitude, speed, or callsign A–Z</span></div>
+          <div class="help-row"><span class="help-key">Matches only</span><span>Hide aircraft that don't match any active alert</span></div>
+          <div class="help-row"><span class="help-key">Airborne only</span><span>Temporarily hides ground traffic in the Live tab only. Does not affect notifications.</span></div>
+          <div class="help-row"><span class="help-key">Min. altitude</span><span>Only show aircraft above a set altitude</span></div>
+          <div class="help-row"><span class="help-key">Detail paneel</span><span>Click any aircraft to see registration, type, altitude, speed, route, squawk and heading. Click again to close.</span></div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-title">History tab</div>
+        <p>Every notification that fires is logged here with callsign, timestamp and flight details. The last 100 entries are stored. Use the <strong>Clear</strong> button to wipe the history.</p>
+      </div>
+
+      <div class="help-section">
+        <div class="help-title">Settings</div>
+        <div class="help-table">
+          <div class="help-row"><span class="help-key">Radius</span><span>Choose 25, 50 or 100 km, or set a custom value with the slider</span></div>
+          <div class="help-row"><span class="help-key">Hide ground traffic</span><span>Global setting — suppresses both notifications and Live tab entries for aircraft on the ground</span></div>
+          <div class="help-row"><span class="help-key">Notifications</span><span>Toggle desktop notifications on or off. Polling continues either way.</span></div>
+          <div class="help-row"><span class="help-key">Timeout</span><span>How long a notification stays visible before auto-dismissing (3–60 s)</span></div>
+          <div class="help-row"><span class="help-key">Sound</span><span>Choose an alert sound and volume. A preview plays when you select a sound.</span></div>
+          <div class="help-row"><span class="help-key">Content</span><span>Choose which details appear in each notification: aircraft type, altitude, speed, route and/or direction</span></div>
+          <div class="help-row"><span class="help-key">Backup</span><span>Export all settings (alerts, location, radius, notification preferences) to a JSON file. Import restores everything at once. Old alerts-only backups are still supported.</span></div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-title">FAQ</div>
+        <div class="help-table">
+          <div class="help-row faq"><span class="help-q">I'm not getting notifications</span><span>Check that desktop notifications are enabled in Settings, and that Chrome notifications are allowed in your OS settings.</span></div>
+          <div class="help-row faq"><span class="help-q">I get a 429 error</span><span>The API rate limit was hit. The Live tab will show cached data. Wait a minute before refreshing.</span></div>
+          <div class="help-row faq"><span class="help-q">Do alerts work when Chrome is closed?</span><span>No — the background worker requires Chrome to be running, but no tab needs to be open.</span></div>
+          <div class="help-row faq"><span class="help-q">Why only one notification per aircraft?</span><span>Once a match is in range it stays tracked. When it leaves your radius it's forgotten, so you'll get a fresh alert if it returns.</span></div>
+          <div class="help-row faq"><span class="help-q">I have multiple alerts and get duplicate notifications</span><span>This is fixed — each aircraft triggers at most one notification per visit, regardless of how many alerts match it.</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Tabs ── -->
+<div class="tabs">
+  <div class="tab active" data-tab="alerts">🔔 Alerts</div>
+  <div class="tab" data-tab="live">📡 Live</div>
+  <div class="tab" data-tab="history">🕓 History</div>
+  <div class="tab" data-tab="settings">⚙️ Settings</div>
+</div>
+
+<!-- ── Panels ── -->
+<div class="panels-wrapper">
+  <div class="disabled-overlay" id="disabledOverlay">
+    <div class="disabled-overlay-icon">✈️</div>
+    <div class="disabled-overlay-text">Plane Alert is paused.<br>Toggle on to resume tracking.</div>
+  </div>
+
+  <div class="panel active" id="tab-alerts"></div>
+  <div class="panel" id="tab-live"></div>
+  <div class="panel" id="tab-history"></div>
+  <div class="panel" id="tab-settings"></div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="saved-toast" id="savedToast">✓ Saved</div>
+
+<!-- ── Scripts (volgorde is belangrijk) ── -->
+<script src="alerts.js"></script>
+<script src="history.js"></script>
+<script src="live.js"></script>
+<script src="settings.js"></script>
+<script src="popup.js"></script>
+
+</body>
+</html>
