@@ -87,7 +87,7 @@ plane-alert/
 - [ ] Mini radar view in the Live tab
 - [ ] Statistics — all-time counters, most seen aircraft types
 - [ ] Multiple locations (e.g. home and work)
-- [ ] Chrome Web Store release
+- [ ] Chrome Web Store release (?)
 
 ---
 
