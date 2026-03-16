@@ -475,6 +475,34 @@ input::placeholder { color: #3a4560; }
 }
 .btn-remove:hover { color: #ef4444; }
 
+/* ── Radar ── */
+.radar-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 14px;
+  background: #0a0c14;
+  border: 1px solid #1e2840;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.radar-empty {
+  display: none;
+  position: absolute;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: #2a3060;
+}
+
 /* ── Live tab ── */
 .live-stats {
   display: grid;

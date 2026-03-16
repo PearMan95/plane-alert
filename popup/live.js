@@ -1,10 +1,17 @@
-// live.js — injecteert Live tab HTML en beheert vliegtuigenlijst, filters, detail paneel
+// live.js — injecteert Live tab HTML en beheert vliegtuigenlijst, filters, detail paneel en radar
 
 // ─── HTML INJECTIE ──────────────────────────────────────────────────────────
 
 function initLiveTab() {
   document.getElementById('tab-live').innerHTML = `
     <button class="refresh-btn" id="btnRefresh">↻ Refresh</button>
+
+    <!-- Radar -->
+    <div class="radar-wrapper">
+      <svg id="radarSvg" class="radar-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="radar-empty" id="radarEmpty">No location set</div>
+    </div>
+
     <div class="live-stats">
       <div class="stat-card">
         <div class="label">In range</div>
@@ -129,6 +136,148 @@ function getAltitudeM(ac) {
   return Math.round(ac.alt_baro * 0.3048);
 }
 
+// ─── RADAR ─────────────────────────────────────────────────────────────────
+
+async function renderRadar(aircraft, isMatchFn) {
+  const svg      = document.getElementById('radarSvg');
+  const emptyMsg = document.getElementById('radarEmpty');
+  const { lat, lon, radius = 50 } = await chrome.storage.local.get(['lat', 'lon', 'radius']);
+
+  svg.innerHTML = '';
+
+  if (!lat || !lon) {
+    emptyMsg.style.display = 'flex';
+    return;
+  }
+  emptyMsg.style.display = 'none';
+
+  const cx = 150, cy = 150, r = 130;
+
+  // Achtergrond
+  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  bg.setAttribute('cx', cx); bg.setAttribute('cy', cy);
+  bg.setAttribute('r', r); bg.setAttribute('fill', '#0a0c14');
+  bg.setAttribute('stroke', '#1e2840'); bg.setAttribute('stroke-width', '1');
+  svg.appendChild(bg);
+
+  // Radius ringen (1/3 en 2/3)
+  [0.33, 0.66, 1].forEach(f => {
+    const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    ring.setAttribute('cx', cx); ring.setAttribute('cy', cy);
+    ring.setAttribute('r', r * f);
+    ring.setAttribute('fill', 'none');
+    ring.setAttribute('stroke', f === 1 ? '#2a3860' : '#1a2040');
+    ring.setAttribute('stroke-width', f === 1 ? '1.5' : '1');
+    ring.setAttribute('stroke-dasharray', f === 1 ? 'none' : '4 4');
+    svg.appendChild(ring);
+
+    // Afstandslabel
+    if (f < 1) {
+      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      label.setAttribute('x', cx + r * f + 3);
+      label.setAttribute('y', cy - 3);
+      label.setAttribute('fill', '#2a3860');
+      label.setAttribute('font-size', '8');
+      label.setAttribute('font-family', 'Space Mono, monospace');
+      label.textContent = `${Math.round(radius * f)} km`;
+      svg.appendChild(label);
+    }
+  });
+
+  // Kruislijnen
+  ['M150,20 L150,280', 'M20,150 L280,150'].forEach(d => {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('d', d);
+    line.setAttribute('stroke', '#1a2040');
+    line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+  });
+
+  // Noord label
+  const north = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  north.setAttribute('x', cx); north.setAttribute('y', 16);
+  north.setAttribute('text-anchor', 'middle');
+  north.setAttribute('fill', '#3a4560');
+  north.setAttribute('font-size', '9');
+  north.setAttribute('font-family', 'Space Mono, monospace');
+  north.textContent = 'N';
+  svg.appendChild(north);
+
+  const userLat = parseFloat(lat);
+  const userLon = parseFloat(lon);
+
+  // Vliegtuigen plotten
+  aircraft.forEach(ac => {
+    if (!ac.lat || !ac.lon) return;
+
+    const distKm = haversineKm(userLat, userLon, ac.lat, ac.lon);
+    if (distKm > radius) return;
+
+    // Positie berekenen (noord = omhoog)
+    const dLat = ac.lat - userLat;
+    const dLon = ac.lon - userLon;
+    const scale = r / radius;
+
+    // Corrigeer lon voor breedtegraad
+    const lonScale = Math.cos(userLat * Math.PI / 180);
+    const px = cx + dLon * lonScale * 111 * scale;
+    const py = cy - dLat * 111 * scale;
+
+    // Buiten cirkel? Skip
+    const dx = px - cx, dy = py - cy;
+    if (Math.sqrt(dx * dx + dy * dy) > r) return;
+
+    const match   = isMatchFn(ac);
+    const color   = match ? '#22c55e' : '#60a5fa';
+    const heading = ac.track ?? 0;
+
+    // Driehoek (vliegtuig icoon)
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('transform', `translate(${px},${py}) rotate(${heading})`);
+    g.style.cursor = 'pointer';
+
+    const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    triangle.setAttribute('points', '0,-6 4,5 0,3 -4,5');
+    triangle.setAttribute('fill', color);
+    triangle.setAttribute('opacity', match ? '1' : '0.7');
+
+    // Glow voor matches
+    if (match) {
+      const glow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      glow.setAttribute('points', '0,-6 4,5 0,3 -4,5');
+      glow.setAttribute('fill', color);
+      glow.setAttribute('opacity', '0.2');
+      glow.setAttribute('transform', 'scale(2)');
+      g.appendChild(glow);
+    }
+
+    g.appendChild(triangle);
+
+    // Callsign label
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', '7'); label.setAttribute('y', '4');
+    label.setAttribute('fill', color);
+    label.setAttribute('font-size', '7');
+    label.setAttribute('font-family', 'Space Mono, monospace');
+    label.setAttribute('opacity', '0.8');
+    label.textContent = ac.flight?.trim() || ac.r || '';
+    g.appendChild(label);
+
+    g.addEventListener('click', () => {
+      openDetailPanel(ac);
+    });
+
+    svg.appendChild(g);
+  });
+
+  // Eigen positie (centrum)
+  const self = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  self.setAttribute('cx', cx); self.setAttribute('cy', cy);
+  self.setAttribute('r', '4'); self.setAttribute('fill', '#60a5fa');
+  self.setAttribute('stroke', '#0a0c14'); self.setAttribute('stroke-width', '1.5');
+  svg.appendChild(self);
+}
+
 // ─── RENDER LIJST ──────────────────────────────────────────────────────────
 
 async function renderAircraftList() {
@@ -187,6 +336,9 @@ async function renderAircraftList() {
   countEl.textContent = aircraft.length;
   matchEl.textContent = aircraft.filter(isMatch).length;
 
+  // Radar renderen met dezelfde data
+  renderRadar(lastAcData, isMatch);
+
   if (aircraft.length === 0) {
     list.innerHTML = '<div class="empty-state">No aircraft match the current filters.</div>';
     return;
@@ -241,6 +393,7 @@ async function loadLive(forceNew = false) {
 
   if (!lat || !lon) {
     list.innerHTML = '<div class="empty-state">Set your location first via ⚙️ Settings.</div>';
+    renderRadar([], () => false);
     return;
   }
 
