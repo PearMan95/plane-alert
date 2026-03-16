@@ -49,7 +49,7 @@ Click **Load unpacked** and select the `plane-alert/` folder (the one containing
 
 **5. Set your location**
 
-Open the extension, go to ⚙️ **Settings** and click **📍 Detect** to set your location. Then add your first alert in the 🔔 **Alerts** tab.
+Open the extension, go to `⚙️ Settings` and click `📍 Detect` to set your location. Then add your first alert in the `🔔 Alerts` tab.
 
 ---
 
@@ -85,10 +85,9 @@ plane-alert/
 
 ## Roadmap
 
-- [ ] Mini radar view in the Live tab
 - [ ] Statistics — all-time counters, most seen aircraft types
 - [ ] Multiple locations (e.g. home and work)
-- [ ] Chrome Web Store release
+- [ ] Chrome Web Store release (?)
 
 ---
 
