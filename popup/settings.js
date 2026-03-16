@@ -78,9 +78,9 @@ function initSettingsTab() {
           <button class="btn-option" data-sound="chime">🎵 Chime</button>
         </div>
         <div class="btn-group" id="volumeRow">
-          <button class="btn-option" data-volume="0.2">🔈 Zacht</button>
+          <button class="btn-option" data-volume="0.2">🔈 Soft</button>
           <button class="btn-option active" data-volume="0.5">🔉 Medium</button>
-          <button class="btn-option" data-volume="1.0">🔊 Hard</button>
+          <button class="btn-option" data-volume="1.0">🔊 Loud</button>
           <button class="btn-option" id="btnPreviewSound" style="flex:0.8">▶ Test</button>
         </div>
 
@@ -119,9 +119,9 @@ function initSettingsTab() {
     <!-- 🚀 Startup tab -->
     <div class="settings-card">
       <div class="settings-card-title">🚀 Startup tab</div>
-      <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Welk tabje opent als je de extensie opent?</p>
+      <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Which tab opens when you launch the extension?</p>
       <div class="btn-group" id="startupTabBtns">
-        <button class="btn-option" data-startup="last">Laatste</button>
+        <button class="btn-option" data-startup="last">Last used</button>
         <button class="btn-option" data-startup="alerts">Alerts</button>
         <button class="btn-option" data-startup="live">Live</button>
         <button class="btn-option" data-startup="history">History</button>
@@ -132,7 +132,7 @@ function initSettingsTab() {
     <!-- 💾 Backup & Test -->
     <div class="settings-card">
       <div class="settings-card-title">💾 Backup &amp; Test</div>
-      <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Exporteert alle instellingen inclusief alerts, locatie en notificaties.</p>
+      <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Exports all settings including alerts, location and notifications.</p>
       <div class="btn-group" style="margin-bottom:8px">
         <button class="btn-option" id="btnExportAlerts" style="padding:9px">⬆️ Export backup</button>
         <button class="btn-option" id="btnImportAlerts" style="padding:9px">⬇️ Import backup</button>
@@ -484,9 +484,9 @@ async function initSettings() {
       }
       await loadSettings();
 
-      btn.textContent = isLegacy ? `✓ ${toStore.alerts?.length ?? 0} alerts` : '✓ Backup geladen';
+      btn.textContent = isLegacy ? `✓ ${toStore.alerts?.length ?? 0} alerts` : '✓ Backup loaded';
     } catch {
-      btn.textContent = '✗ Ongeldig bestand';
+      btn.textContent = '✗ Invalid file';
     }
     setTimeout(() => { btn.textContent = '⬇️ Import backup'; }, 2500);
     e.target.value = '';
