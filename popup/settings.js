@@ -116,6 +116,19 @@ function initSettingsTab() {
       </div>
     </div>
 
+    <!-- 🚀 Startup tab -->
+    <div class="settings-card">
+      <div class="settings-card-title">🚀 Startup tab</div>
+      <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Welk tabje opent als je de extensie opent?</p>
+      <div class="btn-group" id="startupTabBtns">
+        <button class="btn-option" data-startup="last">Laatste</button>
+        <button class="btn-option" data-startup="alerts">Alerts</button>
+        <button class="btn-option" data-startup="live">Live</button>
+        <button class="btn-option" data-startup="history">History</button>
+        <button class="btn-option" data-startup="settings">Settings</button>
+      </div>
+    </div>
+
     <!-- 💾 Backup & Test -->
     <div class="settings-card">
       <div class="settings-card-title">💾 Backup &amp; Test</div>
@@ -136,7 +149,7 @@ function initSettingsTab() {
 let toastTimer = null;
 function showSaved(label = 'Saved') {
   const toast = document.getElementById('savedToast');
-  toast.textContent = `✓ Setting for ${label.toLowerCase()} is saved`;
+  toast.textContent = `✓ ${label}`;
   toast.classList.add('visible');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('visible'), 1800);
@@ -404,12 +417,30 @@ async function initSettings() {
   makeNotifToggle('notifToggleDir',   'dir');
   updateNotifPreview();
 
+  // ── Startup tab ──────────────────────────────────────────────────────────
+
+  const { startupTab = 'last' } = await chrome.storage.local.get('startupTab');
+
+  document.querySelectorAll('[data-startup]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.startup === startupTab);
+  });
+
+  document.querySelectorAll('[data-startup]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await chrome.storage.local.set({ startupTab: btn.dataset.startup });
+      document.querySelectorAll('[data-startup]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      showSaved('Startup tab');
+    });
+  });
+
   // ── Backup export / import ───────────────────────────────────────────────
 
   const BACKUP_KEYS = [
     'alerts', 'lat', 'lon', 'radius',
     'hideGround', 'notificationsEnabled', 'notificationTimeout', 'notifShow',
-    'alertSound', 'alertVolume'
+    'alertSound', 'alertVolume',
+    'startupTab', 'lastTab'
   ];
 
   document.getElementById('btnExportAlerts').addEventListener('click', async () => {
