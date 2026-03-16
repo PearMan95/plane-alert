@@ -2,15 +2,31 @@
 
 // ─── TAB SWITCHING ─────────────────────────────────────────────────────────
 
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+function activateTab(tabName) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
 
-    if (tab.dataset.tab === 'live')    loadLive();
-    if (tab.dataset.tab === 'history') loadHistory();
+  const tab   = document.querySelector(`.tab[data-tab="${tabName}"]`);
+  const panel = document.getElementById(`tab-${tabName}`);
+  if (!tab || !panel) return;
+
+  tab.classList.add('active');
+  panel.classList.add('active');
+
+  if (tabName === 'live')    loadLive();
+  if (tabName === 'history') loadHistory();
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', async () => {
+    const tabName = tab.dataset.tab;
+    activateTab(tabName);
+
+    // Sla actieve tab op als startupTab 'last' is
+    const { startupTab = 'last' } = await chrome.storage.local.get('startupTab');
+    if (startupTab === 'last') {
+      await chrome.storage.local.set({ lastTab: tabName });
+    }
   });
 });
 
@@ -58,21 +74,21 @@ async function updateStatus() {
   const statusText = document.getElementById('statusText');
 
   if (!enabled) {
-    dot.className      = 'dot';
+    dot.className          = 'dot';
     statusText.textContent = 'paused';
     return;
   }
   if (!lat) {
-    dot.className      = 'dot';
+    dot.className          = 'dot';
     statusText.textContent = 'no location';
     return;
   }
   if (lastPoll) {
     const secAgo = Math.round((Date.now() - lastPoll) / 1000);
-    dot.className      = 'dot active';
+    dot.className          = 'dot active';
     statusText.textContent = `${secAgo}s ago`;
   } else {
-    dot.className      = 'dot active';
+    dot.className          = 'dot active';
     statusText.textContent = 'active';
   }
 }
@@ -87,8 +103,8 @@ async function init() {
   initSettingsTab();
 
   // Laad opgeslagen data
-  const { lat, lon, radius = 50, alerts = [], enabled = true } =
-    await chrome.storage.local.get(['lat', 'lon', 'radius', 'alerts', 'enabled']);
+  const { lat, lon, radius = 50, alerts = [], enabled = true, startupTab = 'last', lastTab = 'alerts' } =
+    await chrome.storage.local.get(['lat', 'lon', 'radius', 'alerts', 'enabled', 'startupTab', 'lastTab']);
 
   if (lat && lon) updateCoordDisplay(lat, lon);
 
@@ -97,6 +113,10 @@ async function init() {
   await initSettings();
   renderAlerts(alerts);
   updateStatus();
+
+  // Activeer de juiste tab
+  const tabToOpen = startupTab === 'last' ? lastTab : startupTab;
+  activateTab(tabToOpen);
 }
 
 init();

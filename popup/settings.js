@@ -78,9 +78,9 @@ function initSettingsTab() {
           <button class="btn-option" data-sound="chime">🎵 Chime</button>
         </div>
         <div class="btn-group" id="volumeRow">
-          <button class="btn-option" data-volume="0.2">🔈 Zacht</button>
+          <button class="btn-option" data-volume="0.2">🔈 Soft</button>
           <button class="btn-option active" data-volume="0.5">🔉 Medium</button>
-          <button class="btn-option" data-volume="1.0">🔊 Hard</button>
+          <button class="btn-option" data-volume="1.0">🔊 Loud</button>
           <button class="btn-option" id="btnPreviewSound" style="flex:0.8">▶ Test</button>
         </div>
 
@@ -116,10 +116,23 @@ function initSettingsTab() {
       </div>
     </div>
 
+    <!-- 🚀 Startup tab -->
+    <div class="settings-card">
+      <div class="settings-card-title">🚀 Startup tab</div>
+      <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Which tab opens when you launch the extension?</p>
+      <div class="btn-group" id="startupTabBtns">
+        <button class="btn-option" data-startup="last">Last used</button>
+        <button class="btn-option" data-startup="alerts">Alerts</button>
+        <button class="btn-option" data-startup="live">Live</button>
+        <button class="btn-option" data-startup="history">History</button>
+        <button class="btn-option" data-startup="settings">Settings</button>
+      </div>
+    </div>
+
     <!-- 💾 Backup & Test -->
     <div class="settings-card">
       <div class="settings-card-title">💾 Backup &amp; Test</div>
-      <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Exporteert alle instellingen inclusief alerts, locatie en notificaties.</p>
+      <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Exports all settings including alerts, location and notifications.</p>
       <div class="btn-group" style="margin-bottom:8px">
         <button class="btn-option" id="btnExportAlerts" style="padding:9px">⬆️ Export backup</button>
         <button class="btn-option" id="btnImportAlerts" style="padding:9px">⬇️ Import backup</button>
@@ -136,7 +149,7 @@ function initSettingsTab() {
 let toastTimer = null;
 function showSaved(label = 'Saved') {
   const toast = document.getElementById('savedToast');
-  toast.textContent = `✓ Setting for ${label.toLowerCase()} is saved`;
+  toast.textContent = `✓ ${label}`;
   toast.classList.add('visible');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('visible'), 1800);
@@ -404,12 +417,30 @@ async function initSettings() {
   makeNotifToggle('notifToggleDir',   'dir');
   updateNotifPreview();
 
+  // ── Startup tab ──────────────────────────────────────────────────────────
+
+  const { startupTab = 'last' } = await chrome.storage.local.get('startupTab');
+
+  document.querySelectorAll('[data-startup]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.startup === startupTab);
+  });
+
+  document.querySelectorAll('[data-startup]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await chrome.storage.local.set({ startupTab: btn.dataset.startup });
+      document.querySelectorAll('[data-startup]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      showSaved('Startup tab');
+    });
+  });
+
   // ── Backup export / import ───────────────────────────────────────────────
 
   const BACKUP_KEYS = [
     'alerts', 'lat', 'lon', 'radius',
     'hideGround', 'notificationsEnabled', 'notificationTimeout', 'notifShow',
-    'alertSound', 'alertVolume'
+    'alertSound', 'alertVolume',
+    'startupTab', 'lastTab'
   ];
 
   document.getElementById('btnExportAlerts').addEventListener('click', async () => {
@@ -453,9 +484,9 @@ async function initSettings() {
       }
       await loadSettings();
 
-      btn.textContent = isLegacy ? `✓ ${toStore.alerts?.length ?? 0} alerts` : '✓ Backup geladen';
+      btn.textContent = isLegacy ? `✓ ${toStore.alerts?.length ?? 0} alerts` : '✓ Backup loaded';
     } catch {
-      btn.textContent = '✗ Ongeldig bestand';
+      btn.textContent = '✗ Invalid file';
     }
     setTimeout(() => { btn.textContent = '⬇️ Import backup'; }, 2500);
     e.target.value = '';
