@@ -38,19 +38,20 @@ function setupHistoryEvents() {
     const panel   = document.getElementById('caughtPanel');
     const chevron = document.getElementById('caughtChevron');
     const isOpen  = panel.style.display !== 'none';
-    panel.style.display   = isOpen ? 'none' : 'block';
+    panel.style.display     = isOpen ? 'none' : 'block';
     chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
     if (!isOpen) renderCaughtList();
   });
 
   document.getElementById('btnClearCaught').addEventListener('click', async () => {
-    await chrome.storage.local.set({ caughtAircraft: [] });
+    await chrome.storage.local.set({ caughtAircraft: [], caughtAircraftLabels: {} });
     renderCaughtList();
   });
 }
 
 async function renderCaughtList() {
-  const { caughtAircraft = [] } = await chrome.storage.local.get('caughtAircraft');
+  const { caughtAircraft = [], caughtAircraftLabels = {} } =
+    await chrome.storage.local.get(['caughtAircraft', 'caughtAircraftLabels']);
   const list = document.getElementById('caughtList');
 
   if (caughtAircraft.length === 0) {
@@ -60,15 +61,24 @@ async function renderCaughtList() {
 
   list.innerHTML = '';
   caughtAircraft.forEach(hex => {
+    const label = caughtAircraftLabels[hex] || hex;
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #1a2040';
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #1a2040;gap:8px';
     row.innerHTML = `
-      <span style="font-family:'Space Mono',monospace;font-size:11px;color:#c8d4f0">${hex}</span>
-      <button style="background:none;border:1px solid #2a3060;color:#4b5680;font-size:10px;padding:2px 8px;border-radius:5px;cursor:pointer" data-hex="${hex}">↩️ Release</button>
+      <div style="min-width:0">
+        <div style="font-family:'Space Mono',monospace;font-size:11px;color:#c8d4f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</div>
+        ${label !== hex ? `<div style="font-family:'Space Mono',monospace;font-size:9px;color:#3a4560">${hex}</div>` : ''}
+      </div>
+      <button style="flex-shrink:0;background:none;border:1px solid #2a3060;color:#4b5680;font-size:10px;padding:2px 8px;border-radius:5px;cursor:pointer" data-hex="${hex}">↩️ Release</button>
     `;
     row.querySelector('button').addEventListener('click', async () => {
-      const { caughtAircraft: current = [] } = await chrome.storage.local.get('caughtAircraft');
-      await chrome.storage.local.set({ caughtAircraft: current.filter(h => h !== hex) });
+      const { caughtAircraft: current = [], caughtAircraftLabels: labels = {} } =
+        await chrome.storage.local.get(['caughtAircraft', 'caughtAircraftLabels']);
+      delete labels[hex];
+      await chrome.storage.local.set({
+        caughtAircraft: current.filter(h => h !== hex),
+        caughtAircraftLabels: labels
+      });
       renderCaughtList();
     });
     list.appendChild(row);
@@ -88,11 +98,11 @@ async function loadHistory() {
 
   list.innerHTML = '';
   [...notifHistory].reverse().forEach(entry => {
-    const item    = document.createElement('div');
+    const item     = document.createElement('div');
     item.className = 'history-item';
-    const time    = new Date(entry.ts);
-    const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const dateStr = time.toLocaleDateString([], { day: '2-digit', month: 'short' });
+    const time     = new Date(entry.ts);
+    const timeStr  = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateStr  = time.toLocaleDateString([], { day: '2-digit', month: 'short' });
     item.innerHTML = `
       <div class="history-item-top">
         <span class="history-callsign">${entry.callsign}</span>
