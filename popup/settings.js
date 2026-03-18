@@ -435,7 +435,8 @@ async function initSettings() {
   // ── Muted aircraft ───────────────────────────────────────────────────────
 
   async function renderMutedList() {
-    const { mutedAircraft = [] } = await chrome.storage.local.get('mutedAircraft');
+    const { mutedAircraft = [], cachedAircraft = [] } =
+      await chrome.storage.local.get(['mutedAircraft', 'cachedAircraft']);
     const list = document.getElementById('mutedList');
     if (mutedAircraft.length === 0) {
       list.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:10px;color:#2a3060">No muted aircraft.</div>';
@@ -443,10 +444,14 @@ async function initSettings() {
     }
     list.innerHTML = '';
     mutedAircraft.forEach(hex => {
+      // Zoek registratienummer op in gecachede vliegtuigdata
+      const cached = cachedAircraft.find(ac => ac.hex === hex);
+      const label  = cached?.r ? `${cached.r} (${hex})` : hex;
+
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1a2040';
       row.innerHTML = `
-        <span style="font-family:'Space Mono',monospace;font-size:11px;color:#c8d4f0">${hex}</span>
+        <span style="font-family:'Space Mono',monospace;font-size:11px;color:#c8d4f0">${label}</span>
         <button style="background:none;border:1px solid #2a3060;color:#4b5680;font-size:10px;padding:2px 8px;border-radius:5px;cursor:pointer" data-hex="${hex}">Unmute</button>
       `;
       row.querySelector('button').addEventListener('click', async () => {
