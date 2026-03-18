@@ -47,6 +47,7 @@
           <div class="help-row"><span class="help-key">Airline</span><span>3-letter ICAO airline code, e.g. <code>KLM</code>, <code>TRA</code>, <code>EZY</code></span></div>
           <div class="help-row"><span class="help-key">ICAO hex</span><span>24-bit ICAO address, e.g. <code>484506</code></span></div>
           <div class="help-row"><span class="help-key">DB Flag</span><span>Alert on a category of aircraft (see below)</span></div>
+          <div class="help-row"><span class="help-key">Note</span><span>Add an optional personal note to any alert — click the note text to edit it inline.</span></div>
         </div>
       </div>
 
@@ -63,26 +64,27 @@
       <div class="help-section">
         <div class="help-title">Live tab</div>
         <div class="help-table">
-          <div class="help-row"><span class="help-key">Refresh</span><span>Fetches a fresh snapshot. Has a 20-second cooldown to avoid rate limits.</span></div>
+          <div class="help-row"><span class="help-key">Refresh</span><span>Fetches a fresh snapshot. Has a 20-second cooldown to avoid rate limits. Cached data is shown immediately on open.</span></div>
           <div class="help-row"><span class="help-key">Sort</span><span>Order by distance, altitude, speed, or callsign A–Z</span></div>
           <div class="help-row"><span class="help-key">Matches only</span><span>Hide aircraft that don't match any active alert</span></div>
           <div class="help-row"><span class="help-key">Airborne only</span><span>Temporarily hides ground traffic in the Live tab only. Does not affect notifications.</span></div>
           <div class="help-row"><span class="help-key">Min. altitude</span><span>Only show aircraft above a set altitude</span></div>
-          <div class="help-row"><span class="help-key">Detail paneel</span><span>Click any aircraft to see registration, type, altitude, speed, route, squawk and heading. Use <strong>🎯 Catch</strong> to mark it as caught — it won't trigger notifications again. Click again to close.</span></div>
+          <div class="help-row"><span class="help-key">Detail panel</span><span>Click any aircraft to see registration, type, altitude, speed, route, squawk and heading. Use <strong>🎯 Catch</strong> to mark it as caught — it won't trigger notifications again. Click again to close.</span></div>
         </div>
       </div>
 
       <div class="help-section">
         <div class="help-title">History tab</div>
-        <p>Every notification that fires is logged here with callsign, timestamp and flight details. The last 100 entries are stored. Use the <strong>Clear</strong> button to wipe the history.</p>
-        <p style="margin-top:6px">The <strong>🎯 Caught aircraft</strong> dropdown shows all aircraft you have marked as caught. You can release individual aircraft or clear the entire list.</p>
+        <p>Every notification that fires is logged here with callsign, timestamp and flight details. The last 100 entries are stored. Use the <strong>Clear</strong> button to wipe the history. <strong>Click any entry</strong> to open that aircraft on the map.</p>
+        <p style="margin-top:6px">The <strong>🎯 Caught aircraft</strong> dropdown shows all aircraft you have marked as caught, with their callsign and registration. You can release individual aircraft or clear the entire list.</p>
       </div>
 
       <div class="help-section">
         <div class="help-title">Settings</div>
         <div class="help-table">
-          <div class="help-row"><span class="help-key">Radius</span><span>Choose 25, 50 or 100 km, or set a custom value with the slider</span></div>
+          <div class="help-row"><span class="help-key">Radius</span><span>Choose 25, 50 or 100 km (or nm in imperial mode), or set a custom value with the slider</span></div>
           <div class="help-row"><span class="help-key">Hide ground traffic</span><span>Global setting — suppresses both notifications and Live tab entries for aircraft on the ground</span></div>
+          <div class="help-row"><span class="help-key">Units</span><span>Switch between metric (km · m · km/h) and imperial (nm · ft · kts). Affects the Live tab, detail panel, and notifications.</span></div>
           <div class="help-row"><span class="help-key">Notifications</span><span>Toggle desktop notifications on or off. Polling continues either way.</span></div>
           <div class="help-row"><span class="help-key">Sound</span><span>Choose an alert sound and volume. A preview plays when you select a sound.</span></div>
           <div class="help-row"><span class="help-key">Content</span><span>Choose which details appear in each notification: aircraft type, altitude, speed, route and/or direction</span></div>
