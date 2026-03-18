@@ -508,7 +508,7 @@ input::placeholder { color: #3a4560; }
 
 .stat-card .value.green { color: #22c55e; }
 
-.ac-list { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
+.ac-list { display: flex; flex-direction: column; gap: 5px; }
 
 .ac-item {
   display: flex;
@@ -742,8 +742,6 @@ input::placeholder { color: #3a4560; }
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 320px;
-  overflow-y: auto;
 }
 
 .history-item {
