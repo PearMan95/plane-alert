@@ -92,6 +92,10 @@ function initSettingsTab() {
           </div>
           <div class="notif-toggle-list">
             <div class="notif-toggle-row">
+              <span class="notif-toggle-label">Show registration instead of callsign</span>
+              <button class="alert-toggle" id="notifToggleReg"></button>
+            </div>
+            <div class="notif-toggle-row">
               <span class="notif-toggle-label">Aircraft type in title</span>
               <button class="alert-toggle on" id="notifToggleType"></button>
             </div>
@@ -392,11 +396,13 @@ async function initSettings() {
   });
 
   // Notificatie content builder
-  const defaultShow = { type: true, alt: true, speed: true, route: true, dir: true };
+  const defaultShow = { reg: false, type: true, alt: true, speed: true, route: true, dir: true };
   const show = Object.assign({}, defaultShow, notifShow);
 
   function updateNotifPreview() {
-    const title = show.type ? '✈️ PH-BXA (B744) spotted!' : '✈️ PH-BXA spotted!';
+    const id    = show.reg ? 'PH-BXA' : 'KL1234';
+    const type  = show.type ? ` (B744)` : '';
+    const title = `✈️ ${id}${type} spotted!`;
     const parts = [];
     if (show.alt)   parts.push('8500m');
     if (show.speed) parts.push('850 km/h');
@@ -418,6 +424,7 @@ async function initSettings() {
     });
   }
 
+  makeNotifToggle('notifToggleReg',   'reg');
   makeNotifToggle('notifToggleType',  'type');
   makeNotifToggle('notifToggleAlt',   'alt');
   makeNotifToggle('notifToggleSpeed', 'speed');
@@ -553,7 +560,7 @@ async function initSettings() {
     chrome.notifications.create(`test_${Date.now()}`, {
       type:    'basic',
       iconUrl: '../icons/icon128.png',
-      title:   s.type ? '✈️ PH-TEST (B744) spotted!' : '✈️ PH-TEST spotted!',
+      title:   `✈️ ${s.reg ? 'PH-TEST' : 'PHTEST1'}${s.type ? ' (B744)' : ''} spotted!`,
       message: parts.join(' · ') || '—',
       buttons: [{ title: '🗺️ View on map' }]
     });
