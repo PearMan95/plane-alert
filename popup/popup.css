@@ -986,6 +986,55 @@ input::placeholder { color: #3a4560; }
   transform: translateX(-50%) translateY(0);
 }
 
+/* ── Donate footer ── */
+.donate-footer {
+  border-top: 1px solid #1a2040;
+  padding: 10px 18px;
+  background: #08090f;
+  display: flex;
+  justify-content: center;
+}
+
+.kofi-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f1322;
+  border: 1px solid #2a3a6a;
+  color: #8b9cc8;
+  text-decoration: none;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+  width: 100%;
+  justify-content: center;
+}
+
+.kofi-btn:hover {
+  background: #1a2a50;
+  border-color: #60a5fa;
+  color: #e8e4f0;
+}
+
+.kofi-icon { font-size: 14px; }
+
+.kofi-text { flex: 1; text-align: center; }
+
+.kofi-badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  background: #1e3a6a;
+  color: #60a5fa;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: #0a0c14; }
