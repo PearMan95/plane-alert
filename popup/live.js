@@ -62,6 +62,15 @@ let filterMatches    = false;
 let filterAirborne   = false;
 let minAltitude      = 0;
 
+// ─── HELPERS ───────────────────────────────────────────────────────────────
+
+function buildCaughtLabel(ac) {
+  const callsign = ac.flight?.trim() || '';
+  const reg      = ac.r || '';
+  if (callsign && reg && callsign !== reg) return `${callsign} (${reg})`;
+  return callsign || reg || ac.hex || '???';
+}
+
 // ─── EVENTS ────────────────────────────────────────────────────────────────
 
 function setupLiveEvents() {
@@ -110,10 +119,13 @@ function setupLiveEvents() {
 
   document.getElementById('detailCatchBtn').addEventListener('click', async () => {
     if (!currentDetailHex) return;
-    const { caughtAircraft = [] } = await chrome.storage.local.get('caughtAircraft');
+    const ac = lastAcData.find(a => a.hex === currentDetailHex);
+    const { caughtAircraft = [], caughtAircraftLabels = {} } =
+      await chrome.storage.local.get(['caughtAircraft', 'caughtAircraftLabels']);
     if (!caughtAircraft.includes(currentDetailHex)) {
       caughtAircraft.push(currentDetailHex);
-      await chrome.storage.local.set({ caughtAircraft });
+      if (ac) caughtAircraftLabels[currentDetailHex] = buildCaughtLabel(ac);
+      await chrome.storage.local.set({ caughtAircraft, caughtAircraftLabels });
     }
     document.getElementById('detailPanel').classList.remove('visible');
     currentDetailHex = null;
@@ -349,14 +361,17 @@ function openDetailPanel(ac) {
     const caught = caughtAircraft.includes(ac.hex);
     btn.textContent = caught ? '↩️ Release this aircraft' : '🎯 Catch this aircraft';
     btn.onclick = async () => {
-      const { caughtAircraft: current = [] } = await chrome.storage.local.get('caughtAircraft');
+      const { caughtAircraft: current = [], caughtAircraftLabels: labels = {} } =
+        await chrome.storage.local.get(['caughtAircraft', 'caughtAircraftLabels']);
       const idx = current.indexOf(ac.hex);
       if (idx === -1) {
         current.push(ac.hex);
+        labels[ac.hex] = buildCaughtLabel(ac);
       } else {
         current.splice(idx, 1);
+        delete labels[ac.hex];
       }
-      await chrome.storage.local.set({ caughtAircraft: current });
+      await chrome.storage.local.set({ caughtAircraft: current, caughtAircraftLabels: labels });
       document.getElementById('detailPanel').classList.remove('visible');
       currentDetailHex = null;
       renderAircraftList();
