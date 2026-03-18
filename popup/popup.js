@@ -113,6 +113,7 @@ async function init() {
   await initSettings();
   renderAlerts(alerts);
   updateStatus();
+  setInterval(updateStatus, 5000);
 
   // Activeer de juiste tab
   const tabToOpen = startupTab === 'last' ? lastTab : startupTab;
