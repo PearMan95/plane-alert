@@ -80,8 +80,18 @@ function setupLiveEvents() {
     const wait = COOLDOWN_MS - (now - lastManualLoad);
     const btn  = document.getElementById('btnRefresh');
     if (wait > 0) {
-      btn.textContent = `↻ Wait ${Math.ceil(wait / 1000)}s`;
-      setTimeout(() => { btn.textContent = '↻ Refresh'; }, wait);
+      // Afteller: update elke seconde
+      let remaining = Math.ceil(wait / 1000);
+      btn.textContent = `↻ Wait ${remaining}s`;
+      const interval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(interval);
+          btn.textContent = '↻ Refresh';
+        } else {
+          btn.textContent = `↻ Wait ${remaining}s`;
+        }
+      }, 1000);
       return;
     }
     lastManualLoad = now;
