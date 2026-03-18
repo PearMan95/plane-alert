@@ -6,53 +6,65 @@ function initSettingsTab() {
   document.getElementById('tab-settings').innerHTML = `
     <div id="settingsError"></div>
 
-    <!-- 📍 Location -->
+    <!-- 📍 Location (open by default) -->
     <div class="settings-card">
-      <div class="settings-card-title">📍 Location</div>
-      <div class="location-row">
-        <div class="coord-display empty" id="coordDisplay">Not set</div>
-        <button class="btn-location" id="btnLocation">📍 Detect</button>
-      </div>
-      <div class="settings-sublabel">Radius</div>
-      <div class="btn-group">
-        <button class="btn-option" data-radius="25">25 km</button>
-        <button class="btn-option active" data-radius="50">50 km</button>
-        <button class="btn-option" data-radius="100">100 km</button>
-        <button class="btn-option" data-radius="custom">Custom</button>
-      </div>
-      <div class="custom-slider-row" id="radiusCustomRow">
-        <div class="slider-header">
-          <span style="font-size:10px;color:#3a4560">Custom radius</span>
-          <span class="radius-value"><span id="radiusValue">50</span> km</span>
+      <button class="settings-card-toggle" data-target="cardLocation">
+        <span>📍 Location</span>
+        <span class="settings-chevron open">▼</span>
+      </button>
+      <div class="settings-card-body" id="cardLocation">
+        <div class="location-row">
+          <div class="coord-display empty" id="coordDisplay">Not set</div>
+          <button class="btn-location" id="btnLocation">📍 Detect</button>
         </div>
-        <input type="range" id="radiusSlider" min="10" max="500" step="10" value="50">
+        <div class="settings-sublabel">Radius</div>
+        <div class="btn-group">
+          <button class="btn-option" data-radius="25">25 km</button>
+          <button class="btn-option active" data-radius="50">50 km</button>
+          <button class="btn-option" data-radius="100">100 km</button>
+          <button class="btn-option" data-radius="custom">Custom</button>
+        </div>
+        <div class="custom-slider-row" id="radiusCustomRow">
+          <div class="slider-header">
+            <span style="font-size:10px;color:#3a4560">Custom radius</span>
+            <span class="radius-value"><span id="radiusValue">50</span> km</span>
+          </div>
+          <input type="range" id="radiusSlider" min="10" max="500" step="10" value="50">
+        </div>
       </div>
     </div>
 
     <!-- 🔍 Filters -->
     <div class="settings-card">
-      <div class="settings-card-title">🔍 Filters</div>
-      <div class="settings-toggle-row">
-        <div class="settings-toggle-info">
-          <div class="settings-toggle-label">Hide ground traffic</div>
-          <div class="settings-toggle-sub">Global — affects notifications &amp; Live tab</div>
+      <button class="settings-card-toggle" data-target="cardFilters">
+        <span>🔍 Filters</span>
+        <span class="settings-chevron">▼</span>
+      </button>
+      <div class="settings-card-body" id="cardFilters" style="display:none">
+        <div class="settings-toggle-row">
+          <div class="settings-toggle-info">
+            <div class="settings-toggle-label">Hide ground traffic</div>
+            <div class="settings-toggle-sub">Global — affects notifications &amp; Live tab</div>
+          </div>
+          <button class="alert-toggle on" id="toggleGround"></button>
         </div>
-        <button class="alert-toggle on" id="toggleGround"></button>
       </div>
     </div>
 
     <!-- 🔔 Notifications -->
     <div class="settings-card">
-      <div class="settings-card-title">🔔 Notifications</div>
-
-      <div class="settings-toggle-row" style="margin-bottom:12px">
-        <div class="settings-toggle-info">
-          <div class="settings-toggle-label">Desktop notifications</div>
-          <div class="settings-toggle-sub">Polling continues when off</div>
+      <button class="settings-card-toggle" data-target="cardNotifications">
+        <span>🔔 Notifications</span>
+        <span class="settings-chevron">▼</span>
+      </button>
+      <div class="settings-card-body" id="cardNotifications" style="display:none">
+        <div class="settings-toggle-row" style="margin-bottom:12px">
+          <div class="settings-toggle-info">
+            <div class="settings-toggle-label">Desktop notifications</div>
+            <div class="settings-toggle-sub">Polling continues when off</div>
+          </div>
+          <button class="alert-toggle on" id="toggleNotifications"></button>
         </div>
-        <button class="alert-toggle on" id="toggleNotifications"></button>
-      </div>
-
         <div class="settings-sublabel" style="margin-top:12px">Sound</div>
         <div class="btn-group" style="margin-bottom:6px">
           <button class="btn-option" data-sound="off">🔕 Off</button>
@@ -67,7 +79,6 @@ function initSettingsTab() {
           <button class="btn-option" data-volume="1.0">🔊 Loud</button>
           <button class="btn-option" id="btnPreviewSound" style="flex:0.8">▶ Test</button>
         </div>
-
         <div class="settings-sublabel" style="margin-top:12px">Content</div>
         <div class="notif-builder" id="notifBuilder">
           <div class="notif-builder-preview" id="notifPreview">
@@ -106,27 +117,37 @@ function initSettingsTab() {
 
     <!-- 🚀 Startup tab -->
     <div class="settings-card">
-      <div class="settings-card-title">🚀 Startup tab</div>
-      <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Which tab opens when you launch the extension?</p>
-      <div class="btn-group" id="startupTabBtns">
-        <button class="btn-option" data-startup="last">Last used</button>
-        <button class="btn-option" data-startup="alerts">Alerts</button>
-        <button class="btn-option" data-startup="live">Live</button>
-        <button class="btn-option" data-startup="history">History</button>
-        <button class="btn-option" data-startup="settings">Settings</button>
+      <button class="settings-card-toggle" data-target="cardStartup">
+        <span>🚀 Startup tab</span>
+        <span class="settings-chevron">▼</span>
+      </button>
+      <div class="settings-card-body" id="cardStartup" style="display:none">
+        <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Which tab opens when you launch the extension?</p>
+        <div class="btn-group" id="startupTabBtns">
+          <button class="btn-option" data-startup="last">Last used</button>
+          <button class="btn-option" data-startup="alerts">Alerts</button>
+          <button class="btn-option" data-startup="live">Live</button>
+          <button class="btn-option" data-startup="history">History</button>
+          <button class="btn-option" data-startup="settings">Settings</button>
+        </div>
       </div>
     </div>
 
     <!-- 💾 Backup & Test -->
     <div class="settings-card">
-      <div class="settings-card-title">💾 Backup &amp; Test</div>
-      <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Exports all settings including alerts, location and notifications.</p>
-      <div class="btn-group" style="margin-bottom:8px">
-        <button class="btn-option" id="btnExportAlerts" style="padding:9px">⬆️ Export backup</button>
-        <button class="btn-option" id="btnImportAlerts" style="padding:9px">⬇️ Import backup</button>
+      <button class="settings-card-toggle" data-target="cardBackup">
+        <span>💾 Backup &amp; Test</span>
+        <span class="settings-chevron">▼</span>
+      </button>
+      <div class="settings-card-body" id="cardBackup" style="display:none">
+        <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Exports all settings including alerts, location and notifications.</p>
+        <div class="btn-group" style="margin-bottom:8px">
+          <button class="btn-option" id="btnExportAlerts" style="padding:9px">⬆️ Export backup</button>
+          <button class="btn-option" id="btnImportAlerts" style="padding:9px">⬇️ Import backup</button>
+        </div>
+        <input type="file" id="importFileInput" accept=".json" style="display:none">
+        <button class="btn-add" id="btnTestNotification" style="background:#1a2a4a;border:1px solid #2a4a8a;color:#60a5fa;">🔔 Send test notification</button>
       </div>
-      <input type="file" id="importFileInput" accept=".json" style="display:none">
-      <button class="btn-add" id="btnTestNotification" style="background:#1a2a4a;border:1px solid #2a4a8a;color:#60a5fa;">🔔 Send test notification</button>
     </div>
   `;
   setupSettingsEvents();
@@ -178,6 +199,18 @@ function initRadiusButtons(currentRadius) {
 // ─── EVENTS ────────────────────────────────────────────────────────────────
 
 function setupSettingsEvents() {
+
+  // ── Card dropdowns ────────────────────────────────────────────────────────
+  document.querySelectorAll('.settings-card-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const body    = document.getElementById(btn.dataset.target);
+      const chevron = btn.querySelector('.settings-chevron');
+      const isOpen  = body.style.display !== 'none';
+      body.style.display        = isOpen ? 'none' : 'block';
+      chevron.style.transform   = isOpen ? '' : 'rotate(180deg)';
+      chevron.classList.toggle('open', !isOpen);
+    });
+  });
 
   // Locatie detecteren
   document.getElementById('btnLocation').addEventListener('click', () => {

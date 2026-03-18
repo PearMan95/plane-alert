@@ -68,13 +68,14 @@
           <div class="help-row"><span class="help-key">Matches only</span><span>Hide aircraft that don't match any active alert</span></div>
           <div class="help-row"><span class="help-key">Airborne only</span><span>Temporarily hides ground traffic in the Live tab only. Does not affect notifications.</span></div>
           <div class="help-row"><span class="help-key">Min. altitude</span><span>Only show aircraft above a set altitude</span></div>
-          <div class="help-row"><span class="help-key">Detail paneel</span><span>Click any aircraft to see registration, type, altitude, speed, route, squawk and heading. Click again to close.</span></div>
+          <div class="help-row"><span class="help-key">Detail paneel</span><span>Click any aircraft to see registration, type, altitude, speed, route, squawk and heading. Use <strong>🎯 Catch</strong> to mark it as caught — it won't trigger notifications again. Click again to close.</span></div>
         </div>
       </div>
 
       <div class="help-section">
         <div class="help-title">History tab</div>
         <p>Every notification that fires is logged here with callsign, timestamp and flight details. The last 100 entries are stored. Use the <strong>Clear</strong> button to wipe the history.</p>
+        <p style="margin-top:6px">The <strong>🎯 Caught aircraft</strong> dropdown shows all aircraft you have marked as caught. You can release individual aircraft or clear the entire list.</p>
       </div>
 
       <div class="help-section">
@@ -129,7 +130,7 @@
 <!-- ── Toast ── -->
 <div class="saved-toast" id="savedToast">✓ Saved</div>
 
-<!-- ── Scripts (volgorde is belangrijk) ── -->
+<!-- ── Scripts (volgorde is belangrijk!) ── -->
 <script src="alerts.js"></script>
 <script src="history.js"></script>
 <script src="live.js"></script>
