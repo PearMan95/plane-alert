@@ -551,16 +551,16 @@ input::placeholder { color: #3a4560; }
   margin-left: 6px;
 }
 
-.mute-badge {
+.caught-badge {
   font-size: 9px;
-  background: #2a1a1a;
-  color: #6b7ca8;
+  background: #0a2a1a;
+  color: #4ade80;
   padding: 2px 6px;
   border-radius: 10px;
   margin-left: 6px;
 }
 
-.detail-mute-btn {
+.detail-catch-btn {
   width: 100%;
   background: #1a1a2a;
   color: #6b7ca8;
@@ -574,7 +574,7 @@ input::placeholder { color: #3a4560; }
   cursor: pointer;
   transition: all 0.15s;
 }
-.detail-mute-btn:hover { color: #ef4444; border-color: #4a1a1a; background: #1a0a0a; }
+.detail-catch-btn:hover { color: #ef4444; border-color: #4a1a1a; background: #1a0a0a; }
 
 .live-controls {
   margin-bottom: 10px;

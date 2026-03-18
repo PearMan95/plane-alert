@@ -45,7 +45,7 @@ function initLiveTab() {
       </div>
       <div class="detail-grid" id="detailGrid"></div>
       <button class="detail-map-btn" id="detailMapBtn">🗺️ Open on map</button>
-      <button class="detail-mute-btn" id="detailMuteBtn">🔇 Mute this aircraft</button>
+      <button class="detail-catch-btn" id="detailCatchBtn">🎯 Catch this aircraft</button>
     </div>
   `;
   setupLiveEvents();
@@ -108,12 +108,12 @@ function setupLiveEvents() {
     currentDetailHex = null;
   });
 
-  document.getElementById('detailMuteBtn').addEventListener('click', async () => {
+  document.getElementById('detailCatchBtn').addEventListener('click', async () => {
     if (!currentDetailHex) return;
-    const { mutedAircraft = [] } = await chrome.storage.local.get('mutedAircraft');
-    if (!mutedAircraft.includes(currentDetailHex)) {
-      mutedAircraft.push(currentDetailHex);
-      await chrome.storage.local.set({ mutedAircraft });
+    const { caughtAircraft = [] } = await chrome.storage.local.get('caughtAircraft');
+    if (!caughtAircraft.includes(currentDetailHex)) {
+      caughtAircraft.push(currentDetailHex);
+      await chrome.storage.local.set({ caughtAircraft });
     }
     document.getElementById('detailPanel').classList.remove('visible');
     currentDetailHex = null;
@@ -145,8 +145,8 @@ function getAltitudeM(ac) {
 // ─── RENDER LIJST ──────────────────────────────────────────────────────────
 
 async function renderAircraftList() {
-  const { lat, lon, hideGround = true, alerts = [], mutedAircraft = [] } =
-    await chrome.storage.local.get(['lat', 'lon', 'hideGround', 'alerts', 'mutedAircraft']);
+  const { lat, lon, hideGround = true, alerts = [], caughtAircraft = [] } =
+    await chrome.storage.local.get(['lat', 'lon', 'hideGround', 'alerts', 'caughtAircraft']);
 
   const list    = document.getElementById('acList');
   const countEl = document.getElementById('liveCount');
@@ -154,12 +154,12 @@ async function renderAircraftList() {
 
   const DB_FLAGS = { military: 1, interesting: 2, pia: 4, ladd: 8 };
 
-  function isMuted(ac) {
-    return (mutedAircraft || []).includes(ac.hex);
+  function isCaught(ac) {
+    return (caughtAircraft || []).includes(ac.hex);
   }
 
   function isMatch(ac) {
-    if (isMuted(ac)) return false;
+    if (isCaught(ac)) return false;
     return alerts.some(alert => {
       if (!alert.active) return false;
       const v = alert.value.toUpperCase();
@@ -216,7 +216,7 @@ async function renderAircraftList() {
     const item     = document.createElement('div');
     item.className = `ac-item${match ? ' match' : ''}`;
 
-    const muted    = isMuted(ac);
+    const caught    = isCaught(ac);
     const flight   = ac.flight?.trim() || ac.r || ac.hex || '???';
     const type     = ac.t || '';
     const altitude = ac.alt_baro && ac.alt_baro !== 'ground'
@@ -229,7 +229,7 @@ async function renderAircraftList() {
 
     item.innerHTML = `
       <div style="min-width:0">
-        <div class="ac-flight">${flight}${match ? '<span class="match-badge">MATCH</span>' : ''}${muted ? '<span class="mute-badge">MUTED</span>' : ''}</div>
+        <div class="ac-flight">${flight}${match ? '<span class="match-badge">MATCH</span>' : ''}${caught ? '<span class="caught-badge">CAUGHT</span>' : ''}</div>
         <div class="ac-detail">${route}</div>
         ${dist ? `<div class="ac-distance">${dist}</div>` : ''}
       </div>
@@ -340,20 +340,20 @@ function openDetailPanel(ac) {
     chrome.tabs.create({ url: `https://globe.airplanes.live/?icao=${ac.hex}` });
   };
 
-  // Mute knop updaten
-  chrome.storage.local.get('mutedAircraft').then(({ mutedAircraft = [] }) => {
-    const btn = document.getElementById('detailMuteBtn');
-    const muted = mutedAircraft.includes(ac.hex);
-    btn.textContent = muted ? '🔊 Unmute this aircraft' : '🔇 Mute this aircraft';
+  // Catch knop updaten
+  chrome.storage.local.get('caughtAircraft').then(({ caughtAircraft = [] }) => {
+    const btn = document.getElementById('detailCatchBtn');
+    const caught = caughtAircraft.includes(ac.hex);
+    btn.textContent = caught ? '↩️ Release this aircraft' : '🎯 Catch this aircraft';
     btn.onclick = async () => {
-      const { mutedAircraft: current = [] } = await chrome.storage.local.get('mutedAircraft');
+      const { caughtAircraft: current = [] } = await chrome.storage.local.get('caughtAircraft');
       const idx = current.indexOf(ac.hex);
       if (idx === -1) {
         current.push(ac.hex);
       } else {
         current.splice(idx, 1);
       }
-      await chrome.storage.local.set({ mutedAircraft: current });
+      await chrome.storage.local.set({ caughtAircraft: current });
       document.getElementById('detailPanel').classList.remove('visible');
       currentDetailHex = null;
       renderAircraftList();
