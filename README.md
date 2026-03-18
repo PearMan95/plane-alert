@@ -6,6 +6,8 @@ A Chrome extension that notifies you when a tracked aircraft enters your radius 
 ![Manifest](https://img.shields.io/badge/manifest-v3-green)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F2F31W8JHG)
+
 ---
 
 ## Features
