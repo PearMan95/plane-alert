@@ -167,8 +167,12 @@ function showSaved(label = 'Saved') {
 // ─── LOCATIE ───────────────────────────────────────────────────────────────
 
 function updateCoordDisplay(lat, lon) {
-  const el = document.getElementById('coordDisplay');
-  el.textContent = `${parseFloat(lat).toFixed(3)}°N  ${parseFloat(lon).toFixed(3)}°E`;
+  const el     = document.getElementById('coordDisplay');
+  const latVal = parseFloat(lat);
+  const lonVal = parseFloat(lon);
+  const latDir = latVal >= 0 ? 'N' : 'S';
+  const lonDir = lonVal >= 0 ? 'E' : 'W';
+  el.textContent = `${Math.abs(latVal).toFixed(3)}°${latDir}  ${Math.abs(lonVal).toFixed(3)}°${lonDir}`;
   el.classList.remove('empty');
 }
 
