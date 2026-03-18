@@ -1040,6 +1040,46 @@ input::placeholder { color: #3a4560; }
   text-transform: uppercase;
 }
 
+
+/* ── Alert note ── */
+.alert-note-input {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.alert-note {
+  font-size: 10px;
+  color: #4b5680;
+  margin-top: 3px;
+  cursor: pointer;
+  min-height: 14px;
+  transition: color 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.alert-note:hover { color: #8b9cc8; }
+
+.alert-note-empty {
+  color: #2a3060;
+  font-style: italic;
+}
+
+.alert-note:hover .alert-note-empty { color: #4b5680; }
+
+.alert-note-field {
+  width: 100%;
+  font-size: 10px;
+  padding: 2px 5px;
+  background: #080a12;
+  border: 1px solid #60a5fa;
+  border-radius: 4px;
+  color: #e8e4f0;
+  font-family: 'Outfit', sans-serif;
+  outline: none;
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: #0a0c14; }
