@@ -125,12 +125,12 @@ async function pollAircraft() {
   const now = Date.now();
 
   // Load which aircraft were in range during the previous poll
-  const { inRange = {}, mutedAircraft = [] } = await chrome.storage.local.get(['inRange', 'mutedAircraft']);
+  const { inRange = {}, caughtAircraft = [] } = await chrome.storage.local.get(['inRange', 'caughtAircraft']);
   const newInRange = {};
 
   for (const ac of aircraft) {
-    // Skip gemutede kisten
-    if (ac.hex && mutedAircraft.includes(ac.hex)) continue;
+    // Skip gevangen vliegtuigen
+    if (ac.hex && caughtAircraft.includes(ac.hex)) continue;
 
     // Check which alert (if any) matches this aircraft
     const matchingAlert = config.alerts.find(alert => alert.active && matchesAlert(ac, alert));
@@ -158,7 +158,7 @@ async function pollAircraft() {
         iconUrl: 'icons/icon128.png',
         title:   buildTitle(ac, matchingAlert, show),
         message: buildMessage(ac, config, show),
-        buttons: [{ title: '🗺️ View on map' }]
+        buttons: [{ title: '🗺️ View on map' }, { title: '🎯 Mark as caught' }]
       });
     }
 
@@ -194,10 +194,23 @@ async function pollAircraft() {
   await chrome.storage.local.set({ inRange: newInRange, lastPoll: now, lastCount: aircraft.length, cachedAircraft: data.ac || [] });
 }
 
-// Click on notification button → open the map
-chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
+// Click on notification button
+chrome.notifications.onButtonClicked.addListener(async (notifId, btnIdx) => {
   if (btnIdx === 0) {
     chrome.tabs.create({ url: 'https://globe.airplanes.live' });
+  }
+  if (btnIdx === 1) {
+    // Extract hex from notifId format: notif_<hex>_<timestamp>
+    const parts = notifId.split('_');
+    if (parts.length >= 3) {
+      const hex = parts[1];
+      const { caughtAircraft = [] } = await chrome.storage.local.get('caughtAircraft');
+      if (!caughtAircraft.includes(hex)) {
+        caughtAircraft.push(hex);
+        await chrome.storage.local.set({ caughtAircraft });
+      }
+    }
+    chrome.notifications.clear(notifId);
   }
 });
 
