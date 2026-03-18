@@ -23,29 +23,6 @@ async function playAlertSound(sound, volume) {
   }
 }
 
-// ─── OFFSCREEN DOCUMENT ────────────────────────────────────────────────────
-
-async function ensureOffscreenDocument() {
-  const existing = await chrome.offscreen.hasDocument().catch(() => false);
-  if (!existing) {
-    await chrome.offscreen.createDocument({
-      url:    'offscreen.html',
-      reasons: ['AUDIO_PLAYBACK'],
-      justification: 'Play alert sound when aircraft is detected'
-    });
-  }
-}
-
-async function playAlertSound(sound, volume) {
-  if (!sound || sound === 'off') return;
-  try {
-    await ensureOffscreenDocument();
-    chrome.runtime.sendMessage({ type: 'playSound', sound, volume });
-  } catch (err) {
-    console.warn('[FlightAlert] Could not play sound:', err);
-  }
-}
-
 const API_BASE = 'https://api.airplanes.live/v2/point';
 const POLL_INTERVAL_MINUTES = 1;
 
