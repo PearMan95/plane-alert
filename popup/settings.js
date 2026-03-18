@@ -18,7 +18,7 @@ function initSettingsTab() {
           <button class="btn-location" id="btnLocation">📍 Detect</button>
         </div>
         <div class="settings-sublabel">Radius</div>
-        <div class="btn-group">
+        <div class="btn-group" id="radiusPresetBtns">
           <button class="btn-option" data-radius="25">25 km</button>
           <button class="btn-option active" data-radius="50">50 km</button>
           <button class="btn-option" data-radius="100">100 km</button>
@@ -27,7 +27,7 @@ function initSettingsTab() {
         <div class="custom-slider-row" id="radiusCustomRow">
           <div class="slider-header">
             <span style="font-size:10px;color:#3a4560">Custom radius</span>
-            <span class="radius-value"><span id="radiusValue">50</span> km</span>
+            <span class="radius-value"><span id="radiusValue">50</span> <span id="radiusUnit">km</span></span>
           </div>
           <input type="range" id="radiusSlider" min="10" max="500" step="10" value="50">
         </div>
@@ -48,6 +48,21 @@ function initSettingsTab() {
           </div>
           <button class="alert-toggle on" id="toggleGround"></button>
         </div>
+      </div>
+    </div>
+
+    <!-- 📐 Units -->
+    <div class="settings-card">
+      <button class="settings-card-toggle" data-target="cardUnits">
+        <span>📐 Units</span>
+        <span class="settings-chevron">▼</span>
+      </button>
+      <div class="settings-card-body" id="cardUnits" style="display:none">
+        <div class="btn-group">
+          <button class="btn-option active" data-units="metric">📏 Metric</button>
+          <button class="btn-option" data-units="imperial">✈️ Imperial</button>
+        </div>
+        <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:6px 0 0">Metric: km · m · km/h &nbsp;·&nbsp; Imperial: nm · ft · kts</p>
       </div>
     </div>
 
@@ -181,7 +196,29 @@ function updateCoordDisplay(lat, lon) {
 let radiusSlider;
 let radiusValueEl;
 
-function initRadiusButtons(currentRadius) {
+function kmToDisplayRadius(km, units) {
+  if (units === 'imperial') return `${Math.round(km * 0.53996)} nm`;
+  return `${km} km`;
+}
+
+function updateRadiusLabels(units) {
+  document.querySelectorAll('[data-radius]').forEach(btn => {
+    const val = btn.dataset.radius;
+    if (val !== 'custom') {
+      btn.textContent = kmToDisplayRadius(parseInt(val), units);
+    }
+  });
+  const unitEl = document.getElementById('radiusUnit');
+  if (unitEl) unitEl.textContent = units === 'imperial' ? 'nm' : 'km';
+  const valEl = document.getElementById('radiusValue');
+  if (valEl && radiusSlider) {
+    valEl.textContent = units === 'imperial'
+      ? Math.round(parseInt(radiusSlider.value) * 0.53996)
+      : radiusSlider.value;
+  }
+}
+
+function initRadiusButtons(currentRadius, units = 'metric') {
   radiusSlider  = document.getElementById('radiusSlider');
   radiusValueEl = document.getElementById('radiusValue');
 
@@ -195,9 +232,13 @@ function initRadiusButtons(currentRadius) {
 
   document.getElementById('radiusCustomRow').classList.toggle('visible', isCustom);
   if (isCustom) {
-    radiusSlider.value    = currentRadius;
-    radiusValueEl.textContent = currentRadius;
+    radiusSlider.value = currentRadius;
+    radiusValueEl.textContent = units === 'imperial'
+      ? Math.round(currentRadius * 0.53996)
+      : currentRadius;
   }
+
+  updateRadiusLabels(units);
 }
 
 // ─── EVENTS ────────────────────────────────────────────────────────────────
@@ -210,8 +251,8 @@ function setupSettingsEvents() {
       const body    = document.getElementById(btn.dataset.target);
       const chevron = btn.querySelector('.settings-chevron');
       const isOpen  = body.style.display !== 'none';
-      body.style.display        = isOpen ? 'none' : 'block';
-      chevron.style.transform   = isOpen ? '' : 'rotate(180deg)';
+      body.style.display      = isOpen ? 'none' : 'block';
+      chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
       chevron.classList.toggle('open', !isOpen);
     });
   });
@@ -258,8 +299,11 @@ function setupSettingsEvents() {
       if (val === 'custom') {
         const { radius = 50 } = await chrome.storage.local.get('radius');
         document.getElementById('radiusCustomRow').classList.add('visible');
-        radiusSlider.value        = radius;
-        radiusValueEl.textContent = radius;
+        radiusSlider.value = radius;
+        const { units = 'metric' } = await chrome.storage.local.get('units');
+        radiusValueEl.textContent = units === 'imperial'
+          ? Math.round(radius * 0.53996)
+          : radius;
       } else {
         await chrome.storage.local.set({ radius: parseInt(val) });
         document.getElementById('radiusCustomRow').classList.remove('visible');
@@ -268,8 +312,11 @@ function setupSettingsEvents() {
     });
   });
 
-  document.getElementById('radiusSlider').addEventListener('input', () => {
-    radiusValueEl.textContent = radiusSlider.value;
+  document.getElementById('radiusSlider').addEventListener('input', async () => {
+    const { units = 'metric' } = await chrome.storage.local.get('units');
+    radiusValueEl.textContent = units === 'imperial'
+      ? Math.round(parseInt(radiusSlider.value) * 0.53996)
+      : radiusSlider.value;
   });
   document.getElementById('radiusSlider').addEventListener('change', () => {
     chrome.storage.local.set({ radius: parseInt(radiusSlider.value) });
@@ -281,17 +328,18 @@ function setupSettingsEvents() {
 
 async function loadSettings() {
   initSettingsTab();
-  const { lat, lon, radius = 50 } = await chrome.storage.local.get(['lat', 'lon', 'radius']);
+  const { lat, lon, radius = 50, units = 'metric' } =
+    await chrome.storage.local.get(['lat', 'lon', 'radius', 'units']);
   if (lat && lon) updateCoordDisplay(lat, lon);
-  initRadiusButtons(radius);
+  initRadiusButtons(radius, units);
   await initSettings();
 }
 
 // ─── INSTELLINGEN LADEN (geroepen vanuit popup.js) ─────────────────────────
 
 async function initSettings() {
-  const { hideGround = true, notificationsEnabled = true, notifShow } =
-    await chrome.storage.local.get(['hideGround', 'notificationsEnabled', 'notifShow']);
+  const { hideGround = true, notificationsEnabled = true, notifShow, units = 'metric' } =
+    await chrome.storage.local.get(['hideGround', 'notificationsEnabled', 'notifShow', 'units']);
 
   // Ground toggle
   const toggleGround = document.getElementById('toggleGround');
@@ -302,6 +350,23 @@ async function initSettings() {
     await chrome.storage.local.set({ hideGround: newVal });
     toggleGround.className = `alert-toggle ${newVal ? 'on' : ''}`;
     showSaved('Filter');
+  });
+
+  // Units knoppen
+  document.querySelectorAll('[data-units]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.units === units);
+  });
+
+  document.querySelectorAll('[data-units]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const newUnits = btn.dataset.units;
+      await chrome.storage.local.set({ units: newUnits });
+      document.querySelectorAll('[data-units]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateRadiusLabels(newUnits);
+      updateNotifPreview();
+      showSaved('Units');
+    });
   });
 
   // Notificaties toggle
@@ -374,13 +439,14 @@ async function initSettings() {
   const defaultShow = { reg: false, type: true, alt: true, speed: true, route: true, dir: true };
   const show = Object.assign({}, defaultShow, notifShow);
 
-  function updateNotifPreview() {
+  async function updateNotifPreview() {
+    const { units: u = 'metric' } = await chrome.storage.local.get('units');
     const id    = show.reg ? 'PH-BXA' : 'KL1234';
     const type  = show.type ? ` (B744)` : '';
     const title = `✈️ ${id}${type} spotted!`;
     const parts = [];
-    if (show.alt)   parts.push('8500m');
-    if (show.speed) parts.push('850 km/h');
+    if (show.alt)   parts.push(u === 'imperial' ? '27900 ft' : '8500 m');
+    if (show.speed) parts.push(u === 'imperial' ? '459 kts'  : '850 km/h');
     if (show.route) parts.push('AMS→JFK');
     if (show.dir)   parts.push('from the west');
     document.getElementById('previewTitle').textContent = title;
@@ -427,16 +493,16 @@ async function initSettings() {
   // ── Backup export / import ───────────────────────────────────────────────
 
   const BACKUP_KEYS = [
-    'alerts', 'lat', 'lon', 'radius',
+    'alerts', 'lat', 'lon', 'radius', 'units',
     'hideGround', 'notificationsEnabled', 'notifShow',
     'alertSound', 'alertVolume',
     'startupTab', 'lastTab',
-    'caughtAircraft'
+    'caughtAircraft', 'caughtAircraftLabels'
   ];
 
   document.getElementById('btnExportAlerts').addEventListener('click', async () => {
     const data   = await chrome.storage.local.get(BACKUP_KEYS);
-    const backup = { version: 1, exportedAt: new Date().toISOString(), ...data };
+    const backup = { version: 2, exportedAt: new Date().toISOString(), ...data };
     const blob   = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url    = URL.createObjectURL(blob);
     const a      = document.createElement('a');
@@ -489,11 +555,12 @@ async function initSettings() {
     btn.textContent = '✓ Sent!';
     setTimeout(() => { btn.textContent = '🔔 Send test notification'; }, 2000);
 
-    const { notifShow: ns } = await chrome.storage.local.get('notifShow');
+    const { notifShow: ns, units: u = 'metric' } =
+      await chrome.storage.local.get(['notifShow', 'units']);
     const s = Object.assign({}, defaultShow, ns);
     const parts = [];
-    if (s.alt)   parts.push('8500m');
-    if (s.speed) parts.push('850 km/h');
+    if (s.alt)   parts.push(u === 'imperial' ? '27900 ft' : '8500 m');
+    if (s.speed) parts.push(u === 'imperial' ? '459 kts'  : '850 km/h');
     if (s.route) parts.push('AMS→JFK');
     if (s.dir)   parts.push('from the west');
 

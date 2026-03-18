@@ -103,13 +103,13 @@ async function init() {
   initSettingsTab();
 
   // Laad opgeslagen data
-  const { lat, lon, radius = 50, alerts = [], enabled = true, startupTab = 'last', lastTab = 'alerts' } =
-    await chrome.storage.local.get(['lat', 'lon', 'radius', 'alerts', 'enabled', 'startupTab', 'lastTab']);
+  const { lat, lon, radius = 50, alerts = [], enabled = true, startupTab = 'last', lastTab = 'alerts', units = 'metric' } =
+    await chrome.storage.local.get(['lat', 'lon', 'radius', 'alerts', 'enabled', 'startupTab', 'lastTab', 'units']);
 
   if (lat && lon) updateCoordDisplay(lat, lon);
 
   applyEnabledUI(enabled);
-  initRadiusButtons(radius);
+  initRadiusButtons(radius, units);
   await initSettings();
   renderAlerts(alerts);
   updateStatus();
