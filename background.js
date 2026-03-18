@@ -174,7 +174,9 @@ async function pollAircraft() {
 // Click on notification button
 chrome.notifications.onButtonClicked.addListener(async (notifId, btnIdx) => {
   if (btnIdx === 0) {
-    chrome.tabs.create({ url: 'https://globe.airplanes.live' });
+    const hexParts = notifId.split('_');
+    const hex = hexParts.length >= 3 ? hexParts[1] : '';
+    chrome.tabs.create({ url: `https://globe.airplanes.live${hex ? `/?icao=${hex}` : ''}` });
   }
   if (btnIdx === 1) {
     // Extract hex from notifId format: notif_<hex>_<timestamp>
