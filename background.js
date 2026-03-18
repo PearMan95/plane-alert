@@ -125,10 +125,13 @@ async function pollAircraft() {
   const now = Date.now();
 
   // Load which aircraft were in range during the previous poll
-  const { inRange = {} } = await chrome.storage.local.get('inRange');
+  const { inRange = {}, mutedAircraft = [] } = await chrome.storage.local.get(['inRange', 'mutedAircraft']);
   const newInRange = {};
 
   for (const ac of aircraft) {
+    // Skip gemutede kisten
+    if (ac.hex && mutedAircraft.includes(ac.hex)) continue;
+
     // Check which alert (if any) matches this aircraft
     const matchingAlert = config.alerts.find(alert => alert.active && matchesAlert(ac, alert));
     if (!matchingAlert) continue;
