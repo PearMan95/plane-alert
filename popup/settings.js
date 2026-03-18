@@ -273,6 +273,16 @@ function setupSettingsEvents() {
   });
 }
 
+// ─── INSTELLINGEN HERLADEN (na backup import) ──────────────────────────────
+
+async function loadSettings() {
+  initSettingsTab();
+  const { lat, lon, radius = 50 } = await chrome.storage.local.get(['lat', 'lon', 'radius']);
+  if (lat && lon) updateCoordDisplay(lat, lon);
+  initRadiusButtons(radius);
+  await initSettings();
+}
+
 // ─── INSTELLINGEN LADEN (geroepen vanuit popup.js) ─────────────────────────
 
 async function initSettings() {
