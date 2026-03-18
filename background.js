@@ -149,7 +149,7 @@ async function pollAircraft() {
 
     const { notificationsEnabled = true, notificationTimeout = 10, notifShow = {} } =
       await chrome.storage.local.get(['notificationsEnabled', 'notificationTimeout', 'notifShow']);
-    const show = Object.assign({ type: true, alt: true, speed: true, route: true, dir: true }, notifShow);
+    const show = Object.assign({ reg: false, type: true, alt: true, speed: true, route: true, dir: true }, notifShow);
 
     if (notificationsEnabled) {
       const notifId = `notif_${key}_${now}`;
@@ -173,7 +173,7 @@ async function pollAircraft() {
     await playAlertSound(alertSound, alertVolume);
 
     // Sla op in geschiedenis
-    const callsign = ac.flight?.trim() || ac.r || ac.hex;
+    const callsign = show.reg ? (ac.r || ac.flight?.trim() || ac.hex) : (ac.flight?.trim() || ac.r || ac.hex);
     const parts = [];
     if (ac.alt_baro && ac.alt_baro !== 'ground') parts.push(`${Math.round(ac.alt_baro * 0.3048)}m`);
     if (ac.gs) parts.push(`${Math.round(ac.gs * 1.852)} km/h`);
@@ -240,8 +240,8 @@ function matchesAlert(ac, alert) {
 }
 
 function buildTitle(ac, alert, show = {}) {
-  const id = ac.flight?.trim() || ac.r || ac.hex;
-  const type = (show.type !== false) && ac.t ? ` (${ac.t})` : '';
+  const id    = show.reg ? (ac.r || ac.flight?.trim() || ac.hex) : (ac.flight?.trim() || ac.r || ac.hex);
+  const type  = (show.type !== false) && ac.t ? ` (${ac.t})` : '';
   const emoji = alert.type === 'dbflag' && alert.value.toLowerCase() === 'military' ? '🪖' : '✈️';
   return `${emoji} ${id}${type} spotted!`;
 }
