@@ -749,7 +749,10 @@ input::placeholder { color: #3a4560; }
   border: 1px solid #1e2840;
   border-radius: 8px;
   padding: 9px 12px;
+  transition: border-color 0.15s;
 }
+
+.history-item[title]:hover { border-color: #2a3860; }
 
 .history-item-top {
   display: flex;

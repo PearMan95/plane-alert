@@ -110,6 +110,13 @@ async function loadHistory() {
       </div>
       <div class="history-detail">${entry.detail}</div>
     `;
+    if (entry.hex) {
+      item.style.cursor = 'pointer';
+      item.title = 'Open on map';
+      item.addEventListener('click', () => {
+        chrome.tabs.create({ url: `https://globe.airplanes.live/?icao=${entry.hex}` });
+      });
+    }
     list.appendChild(item);
   });
 }
