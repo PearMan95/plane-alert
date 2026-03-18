@@ -183,10 +183,19 @@ chrome.notifications.onButtonClicked.addListener(async (notifId, btnIdx) => {
     const parts = notifId.split('_');
     if (parts.length >= 3) {
       const hex = parts[1];
-      const { caughtAircraft = [] } = await chrome.storage.local.get('caughtAircraft');
+      const { caughtAircraft = [], caughtAircraftLabels = {}, cachedAircraft = [] } =
+        await chrome.storage.local.get(['caughtAircraft', 'caughtAircraftLabels', 'cachedAircraft']);
       if (!caughtAircraft.includes(hex)) {
         caughtAircraft.push(hex);
-        await chrome.storage.local.set({ caughtAircraft });
+        const ac = cachedAircraft.find(a => a.hex === hex);
+        if (ac) {
+          const callsign = ac.flight?.trim() || '';
+          const reg      = ac.r || '';
+          caughtAircraftLabels[hex] = (callsign && reg && callsign !== reg)
+            ? `${callsign} (${reg})`
+            : callsign || reg || hex;
+        }
+        await chrome.storage.local.set({ caughtAircraft, caughtAircraftLabels });
       }
     }
     chrome.notifications.clear(notifId);
