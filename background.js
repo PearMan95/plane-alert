@@ -146,9 +146,18 @@ async function pollAircraft() {
 
     // Sla op in geschiedenis
     const callsign = show.reg ? (ac.r || ac.flight?.trim() || ac.hex) : (ac.flight?.trim() || ac.r || ac.hex);
+    const imperial = config.units === 'imperial';
     const parts = [];
-    if (ac.alt_baro && ac.alt_baro !== 'ground') parts.push(`${Math.round(ac.alt_baro * 0.3048)}m`);
-    if (ac.gs) parts.push(`${Math.round(ac.gs * 1.852)} km/h`);
+    if (ac.alt_baro && ac.alt_baro !== 'ground') {
+      parts.push(imperial
+        ? `${Math.round(ac.alt_baro)} ft`
+        : `${Math.round(ac.alt_baro * 0.3048)} m`);
+    }
+    if (ac.gs) {
+      parts.push(imperial
+        ? `${Math.round(ac.gs)} kts`
+        : `${Math.round(ac.gs * 1.852)} km/h`);
+    }
     const from = ac.orig_iata || ac.orig_icao;
     const to   = ac.dest_iata || ac.dest_icao;
     if (from && to) parts.push(`${from}→${to}`);
@@ -257,14 +266,21 @@ function calculateBearing(userLat, userLon, acLat, acLon) {
 
 function buildMessage(ac, config, show = {}) {
   const parts = [];
+  const imperial = config.units === 'imperial';
 
   if (show.alt !== false) {
-    const altitude = ac.alt_baro ? `${Math.round(ac.alt_baro * 0.3048)} m` : 'unknown';
-    parts.push(`${altitude}`);
+    if (ac.alt_baro && ac.alt_baro !== 'ground') {
+      const altitude = imperial
+        ? `${Math.round(ac.alt_baro).toLocaleString()} ft`
+        : `${Math.round(ac.alt_baro * 0.3048)} m`;
+      parts.push(altitude);
+    }
   }
 
   if (show.speed !== false) {
-    const speed = ac.gs ? `${Math.round(ac.gs * 1.852)} km/h` : 'unknown';
+    const speed = ac.gs
+      ? (imperial ? `${Math.round(ac.gs)} kts` : `${Math.round(ac.gs * 1.852)} km/h`)
+      : 'unknown';
     parts.push(speed);
   }
 
@@ -291,6 +307,6 @@ function isOnGround(ac) {
 }
 
 async function getConfig() {
-  const result = await chrome.storage.local.get(['lat', 'lon', 'radius', 'alerts', 'hideGround']);
+  const result = await chrome.storage.local.get(['lat', 'lon', 'radius', 'alerts', 'hideGround', 'units']);
   return result;
 }

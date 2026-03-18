@@ -115,10 +115,16 @@ function setupLiveEvents() {
     renderAircraftList();
   });
 
-  document.getElementById('minAltSlider').addEventListener('input', (e) => {
+  document.getElementById('minAltSlider').addEventListener('input', async (e) => {
     minAltitude = parseInt(e.target.value);
-    document.getElementById('minAltValue').textContent =
-      minAltitude === 0 ? '0 m' : `${minAltitude.toLocaleString()} m`;
+    const { units: u = 'metric' } = await chrome.storage.local.get('units');
+    if (minAltitude === 0) {
+      document.getElementById('minAltValue').textContent = u === 'imperial' ? '0 ft' : '0 m';
+    } else {
+      document.getElementById('minAltValue').textContent = u === 'imperial'
+        ? `${minAltitude.toLocaleString()} ft`
+        : `${minAltitude.toLocaleString()} m`;
+    }
     renderAircraftList();
   });
 
@@ -145,6 +151,32 @@ function setupLiveEvents() {
 
 // ─── HELPERS ───────────────────────────────────────────────────────────────
 
+// ─── UNIT CONVERSIE ────────────────────────────────────────────────────────
+
+function fmtAlt(feet, units) {
+  if (!feet || feet === 'ground') return 'GND';
+  if (units === 'imperial') return `${Math.round(feet / 100) * 100} ft`;
+  return `${Math.round(feet * 0.3048 / 100) * 100} m`;
+}
+
+function fmtAltExact(feet, units) {
+  if (!feet || feet === 'ground') return 'Ground';
+  if (units === 'imperial') return `${Math.round(feet).toLocaleString()} ft`;
+  return `${Math.round(feet * 0.3048).toLocaleString()} m`;
+}
+
+function fmtSpeed(knots, units) {
+  if (!knots) return '—';
+  if (units === 'imperial') return `${Math.round(knots)} kts`;
+  return `${Math.round(knots * 1.852)} km/h`;
+}
+
+function fmtDist(km, units) {
+  if (km == null) return '';
+  if (units === 'imperial') return `${(km * 0.53996).toFixed(0)} nm away`;
+  return `${km.toFixed(0)} km away`;
+}
+
 function haversineKm(lat1, lon1, lat2, lon2) {
   const R    = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -167,8 +199,8 @@ function getAltitudeM(ac) {
 // ─── RENDER LIJST ──────────────────────────────────────────────────────────
 
 async function renderAircraftList() {
-  const { lat, lon, hideGround = true, alerts = [], caughtAircraft = [] } =
-    await chrome.storage.local.get(['lat', 'lon', 'hideGround', 'alerts', 'caughtAircraft']);
+  const { lat, lon, hideGround = true, alerts = [], caughtAircraft = [], units = 'metric' } =
+    await chrome.storage.local.get(['lat', 'lon', 'hideGround', 'alerts', 'caughtAircraft', 'units']);
 
   const list    = document.getElementById('acList');
   const countEl = document.getElementById('liveCount');
@@ -205,7 +237,13 @@ async function renderAircraftList() {
   if (hideGround !== false) aircraft = aircraft.filter(ac => !isOnGround(ac));
   if (filterAirborne)       aircraft = aircraft.filter(ac => !isOnGround(ac));
   if (filterMatches)        aircraft = aircraft.filter(ac => isMatch(ac));
-  if (minAltitude > 0)      aircraft = aircraft.filter(ac => getAltitudeM(ac) >= minAltitude);
+  if (minAltitude > 0) {
+    aircraft = aircraft.filter(ac => {
+      if (!ac.alt_baro || ac.alt_baro === 'ground') return false;
+      const thresholdFt = units === 'imperial' ? minAltitude : minAltitude / 0.3048;
+      return ac.alt_baro >= thresholdFt;
+    });
+  }
 
   const userLat = parseFloat(lat);
   const userLon = parseFloat(lon);
@@ -241,13 +279,11 @@ async function renderAircraftList() {
     const caught    = isCaught(ac);
     const flight   = ac.flight?.trim() || ac.r || ac.hex || '???';
     const type     = ac.t || '';
-    const altitude = ac.alt_baro && ac.alt_baro !== 'ground'
-      ? `${Math.round(ac.alt_baro * 0.3048 / 100) * 100}m`
-      : 'GND';
+    const altitude = fmtAlt(ac.alt_baro, units);
     const from  = ac.orig_iata || '';
     const to    = ac.dest_iata || '';
     const route = from && to ? `${from}→${to}` : (from || to || type);
-    const dist  = ac._distKm != null ? `${ac._distKm.toFixed(0)} km away` : '';
+    const dist  = ac._distKm != null ? fmtDist(ac._distKm, units) : '';
 
     item.innerHTML = `
       <div style="min-width:0">
@@ -333,18 +369,19 @@ async function loadLive(forceNew = false) {
 
 // ─── DETAIL PANEEL ─────────────────────────────────────────────────────────
 
-function openDetailPanel(ac) {
+async function openDetailPanel(ac) {
   currentDetailHex = ac.hex;
 
   document.getElementById('detailCallsign').textContent =
     ac.flight?.trim() || ac.r || ac.hex || '???';
 
+  const { units: detailUnits = 'metric' } = await chrome.storage.local.get('units');
+
   const cells = [
     { label: 'Registration', val: ac.r || '—' },
     { label: 'Type',         val: ac.t || '—' },
-    { label: 'Altitude',     val: ac.alt_baro && ac.alt_baro !== 'ground'
-        ? `${Math.round(ac.alt_baro * 0.3048).toLocaleString()} m` : 'Ground' },
-    { label: 'Speed',        val: ac.gs ? `${Math.round(ac.gs * 1.852)} km/h` : '—' },
+    { label: 'Altitude',     val: fmtAltExact(ac.alt_baro, detailUnits) },
+    { label: 'Speed',        val: fmtSpeed(ac.gs, detailUnits) },
     { label: 'From',         val: ac.orig_iata || ac.orig_icao || '—' },
     { label: 'To',           val: ac.dest_iata || ac.dest_icao || '—' },
     { label: 'Squawk',       val: ac.squawk || '—' },
