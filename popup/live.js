@@ -257,53 +257,56 @@ async function loadLive(forceNew = false) {
     await chrome.storage.local.get(['lat', 'lon', 'radius', 'lastPoll', 'cachedAircraft']);
 
   const list = document.getElementById('acList');
+  const btn  = document.getElementById('btnRefresh');
 
   if (!lat || !lon) {
     list.innerHTML = '<div class="empty-state">Set your location first via ⚙️ Settings.</div>';
     return;
   }
 
-  const cacheStale = !lastPoll || (Date.now() - lastPoll) > 90000;
-
-  if (!forceNew && cachedAircraft && !cacheStale) {
+  // Toon cache direct als die beschikbaar is — ook als hij oud is
+  if (cachedAircraft) {
     lastAcData = cachedAircraft;
-    const secAgo = Math.round((Date.now() - lastPoll) / 1000);
-    const btn    = document.getElementById('btnRefresh');
-    btn.textContent = `↻ Cached (${secAgo}s old)`;
-    setTimeout(() => { btn.textContent = '↻ Refresh'; }, 2000);
-  } else {
-    list.innerHTML = '<div class="empty-state">Loading...</div>';
-    const url = `https://api.airplanes.live/v2/point/${lat}/${lon}/${Math.round(radius / 1.852)}`;
-
-    try {
-      const resp = await fetch(url);
-      if (resp.status === 429) {
-        if (cachedAircraft) {
-          lastAcData = cachedAircraft;
-          list.innerHTML = `<div class="error-message" style="margin-bottom:8px">Rate limit reached — showing cached data.</div>`;
-        } else {
-          list.innerHTML = `<div class="error-message">API rate limit reached (429).<br>Wait a minute and try again.</div>`;
-          return;
-        }
-      } else if (!resp.ok) {
-        throw new Error(`HTTP ${resp.status}`);
-      } else {
-        const data = await resp.json();
-        lastAcData = data.ac || [];
-        await chrome.storage.local.set({ cachedAircraft: lastAcData, lastPoll: Date.now() });
-      }
-    } catch (err) {
-      if (cachedAircraft) {
-        lastAcData = cachedAircraft;
-        list.innerHTML = `<div class="error-message" style="margin-bottom:8px">API unreachable — showing cached data.</div>`;
-      } else {
-        list.innerHTML = `<div class="error-message">Could not reach the API:<br>${err.message}</div>`;
-        return;
-      }
-    }
+    renderAircraftList();
   }
 
-  renderAircraftList();
+  const cacheStale = !lastPoll || (Date.now() - lastPoll) > 90000;
+
+  // Niet verversen als cache vers is en geen handmatige refresh
+  if (!forceNew && cachedAircraft && !cacheStale) {
+    const secAgo = Math.round((Date.now() - lastPoll) / 1000);
+    btn.textContent = `↻ Cached (${secAgo}s old)`;
+    setTimeout(() => { btn.textContent = '↻ Refresh'; }, 2000);
+    return;
+  }
+
+  // Cache ontbreekt helemaal: toon loading state
+  if (!cachedAircraft) {
+    list.innerHTML = '<div class="empty-state">Loading...</div>';
+  }
+
+  const url = `https://api.airplanes.live/v2/point/${lat}/${lon}/${Math.round(radius / 1.852)}`;
+
+  try {
+    const resp = await fetch(url);
+    if (resp.status === 429) {
+      if (!cachedAircraft) {
+        list.innerHTML = `<div class="error-message">API rate limit reached (429).<br>Wait a minute and try again.</div>`;
+      }
+      return;
+    } else if (!resp.ok) {
+      throw new Error(`HTTP ${resp.status}`);
+    } else {
+      const data = await resp.json();
+      lastAcData = data.ac || [];
+      await chrome.storage.local.set({ cachedAircraft: lastAcData, lastPoll: Date.now() });
+      renderAircraftList();
+    }
+  } catch (err) {
+    if (!cachedAircraft) {
+      list.innerHTML = `<div class="error-message">Could not reach the API:<br>${err.message}</div>`;
+    }
+  }
 }
 
 // ─── DETAIL PANEEL ─────────────────────────────────────────────────────────
