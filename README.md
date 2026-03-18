@@ -25,7 +25,7 @@ A Chrome extension that notifies you when a tracked aircraft enters your radius 
 
 ## Installation
 
-Plane Alert is not yet available on the Chrome Web Store. You can load it manually as an unpacked extension.
+Plane Alert is not *yet* available on the Chrome Web Store. You can load it manually as an unpacked extension.
 
 **1. Download the source**
 
