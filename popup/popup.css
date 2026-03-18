@@ -6,6 +6,9 @@ body {
   color: #e8e4f0;
   font-family: 'Outfit', sans-serif;
   font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  max-height: 600px;
 }
 
 /* ── Header ── */
@@ -253,7 +256,7 @@ body {
 .tab.active { color: #60a5fa; border-bottom-color: #60a5fa; }
 
 /* ── Panels wrapper ── */
-.panels-wrapper { position: relative; }
+.panels-wrapper { position: relative; flex: 1; min-height: 0; overflow: hidden; }
 
 .disabled-overlay {
   display: none;
@@ -282,7 +285,7 @@ body {
   line-height: 1.7;
 }
 
-.panel { display: none; padding: 16px 18px; max-height: 480px; overflow-y: auto; }
+.panel { display: none; padding: 16px 18px; height: 100%; max-height: 100%; overflow-y: auto; }
 .panel.active { display: block; }
 
 /* ── Shared components ── */
@@ -993,6 +996,7 @@ input::placeholder { color: #3a4560; }
   background: #08090f;
   display: flex;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .kofi-btn {
