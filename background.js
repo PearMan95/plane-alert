@@ -147,8 +147,8 @@ async function pollAircraft() {
     inRange[key] = true;
     await chrome.storage.local.set({ inRange });
 
-    const { notificationsEnabled = true, notificationTimeout = 10, notifShow = {} } =
-      await chrome.storage.local.get(['notificationsEnabled', 'notificationTimeout', 'notifShow']);
+    const { notificationsEnabled = true, notifShow = {} } =
+      await chrome.storage.local.get(['notificationsEnabled', 'notifShow']);
     const show = Object.assign({ reg: false, type: true, alt: true, speed: true, route: true, dir: true }, notifShow);
 
     if (notificationsEnabled) {
@@ -160,11 +160,6 @@ async function pollAircraft() {
         message: buildMessage(ac, config, show),
         buttons: [{ title: '🗺️ View on map' }]
       });
-
-      // Auto-dismiss after timeout
-      setTimeout(() => {
-        chrome.notifications.clear(notifId);
-      }, notificationTimeout * 1000);
     }
 
     // Speel geluid af
