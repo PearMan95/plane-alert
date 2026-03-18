@@ -11,7 +11,7 @@ A Chrome extension that notifies you when a tracked aircraft enters your radius 
 ## Features
 
 - **Custom alerts** — track aircraft by registration, flight number, aircraft type, airline, ICAO hex address, or category (military, interesting, PIA, LADD)
-- **Desktop notifications** — get notified the moment a match enters your radius, with configurable content (altitude, speed, route, direction)
+- **Desktop notifications** — get notified the moment a match enters your radius, with configurable content (altitude, speed, route, direction). Notifications persist in your OS notification centre.
 - **Alert sound** — choose from Ping, Radar, Alert or Chime with adjustable volume (soft, medium, loud)
 - **Live tab** — see all aircraft in your radius in real time, with sorting and filtering options
 - **Detail panel** — click any aircraft to see full details and open it on the airplanes.live globe
