@@ -129,6 +129,14 @@ function initSettingsTab() {
       </div>
     </div>
 
+    <!-- 🔇 Muted aircraft -->
+    <div class="settings-card">
+      <div class="settings-card-title">🔇 Muted aircraft</div>
+      <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Aircraft you have muted via the Live tab. They will not trigger notifications.</p>
+      <div id="mutedList" style="margin-bottom:8px"></div>
+      <button class="btn-option" id="btnClearMuted" style="width:100%;padding:8px">Clear all muted aircraft</button>
+    </div>
+
     <!-- 💾 Backup & Test -->
     <div class="settings-card">
       <div class="settings-card-title">💾 Backup &amp; Test</div>
@@ -417,6 +425,41 @@ async function initSettings() {
   makeNotifToggle('notifToggleDir',   'dir');
   updateNotifPreview();
 
+  // ── Muted aircraft ───────────────────────────────────────────────────────
+
+  async function renderMutedList() {
+    const { mutedAircraft = [] } = await chrome.storage.local.get('mutedAircraft');
+    const list = document.getElementById('mutedList');
+    if (mutedAircraft.length === 0) {
+      list.innerHTML = '<div style="font-family:Space Mono,monospace;font-size:10px;color:#2a3060">No muted aircraft.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    mutedAircraft.forEach(hex => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1a2040';
+      row.innerHTML = `
+        <span style="font-family:'Space Mono',monospace;font-size:11px;color:#c8d4f0">${hex}</span>
+        <button style="background:none;border:1px solid #2a3060;color:#4b5680;font-size:10px;padding:2px 8px;border-radius:5px;cursor:pointer" data-hex="${hex}">Unmute</button>
+      `;
+      row.querySelector('button').addEventListener('click', async () => {
+        const { mutedAircraft: current = [] } = await chrome.storage.local.get('mutedAircraft');
+        await chrome.storage.local.set({ mutedAircraft: current.filter(h => h !== hex) });
+        renderMutedList();
+        showSaved('Unmuted');
+      });
+      list.appendChild(row);
+    });
+  }
+
+  renderMutedList();
+
+  document.getElementById('btnClearMuted').addEventListener('click', async () => {
+    await chrome.storage.local.set({ mutedAircraft: [] });
+    renderMutedList();
+    showSaved('Muted list cleared');
+  });
+
   // ── Startup tab ──────────────────────────────────────────────────────────
 
   const { startupTab = 'last' } = await chrome.storage.local.get('startupTab');
@@ -440,7 +483,8 @@ async function initSettings() {
     'alerts', 'lat', 'lon', 'radius',
     'hideGround', 'notificationsEnabled', 'notificationTimeout', 'notifShow',
     'alertSound', 'alertVolume',
-    'startupTab', 'lastTab'
+    'startupTab', 'lastTab',
+    'mutedAircraft'
   ];
 
   document.getElementById('btnExportAlerts').addEventListener('click', async () => {
