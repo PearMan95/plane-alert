@@ -142,11 +142,30 @@ async function renderAlerts(alerts) {
   });
 
   list.querySelectorAll('.btn-remove').forEach(btn => {
+    let confirmTimer = null;
+    let pending = false;
+
     btn.addEventListener('click', async () => {
-      let { alerts = [] } = await chrome.storage.local.get('alerts');
-      alerts = alerts.filter(a => a.id !== btn.dataset.id);
-      await chrome.storage.local.set({ alerts });
-      renderAlerts(alerts);
+      if (!pending) {
+        // Eerste klik: toon bevestiging
+        pending = true;
+        btn.textContent = '✓';
+        btn.style.color = '#ef4444';
+        btn.title = 'Click again to remove';
+        confirmTimer = setTimeout(() => {
+          pending = false;
+          btn.textContent = '×';
+          btn.style.color = '';
+          btn.title = '';
+        }, 2000);
+      } else {
+        // Tweede klik: echt verwijderen
+        clearTimeout(confirmTimer);
+        let { alerts = [] } = await chrome.storage.local.get('alerts');
+        alerts = alerts.filter(a => a.id !== btn.dataset.id);
+        await chrome.storage.local.set({ alerts });
+        renderAlerts(alerts);
+      }
     });
   });
 }
