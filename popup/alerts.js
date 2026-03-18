@@ -23,6 +23,7 @@ function initAlertsTab() {
           <option value="ladd">📵 LADD (blocked)</option>
         </select>
       </div>
+      <input type="text" id="alertNote" placeholder="Note (optional)" class="alert-note-input" />
       <button class="btn-add" id="btnAdd">+ Add alert</button>
     </div>
     <div class="section-label">Active alerts</div>
@@ -78,6 +79,7 @@ function setupAlertsEvents() {
       : document.getElementById('alertValue').value.trim().toUpperCase();
     if (!value) return;
 
+    const note      = document.getElementById('alertNote').value.trim();
     const labelText = isFlag ? flagLabels[value] || value : value;
     const { alerts = [] } = await chrome.storage.local.get('alerts');
 
@@ -91,11 +93,13 @@ function setupAlertsEvents() {
       type,
       value,
       label: `${typeLabels[type]}: ${labelText}`,
+      note: note || '',
       active: true
     });
 
     await chrome.storage.local.set({ alerts });
     document.getElementById('alertValue').value = '';
+    document.getElementById('alertNote').value  = '';
     renderAlerts(alerts);
   });
 }
@@ -123,11 +127,53 @@ async function renderAlerts(alerts) {
       <div class="alert-info">
         <div class="alert-value">${alert.type === 'dbflag' ? (flagLabels[alert.value] || alert.value) : alert.value}</div>
         <div class="alert-type-label">${typeLabels[alert.type] || alert.type}</div>
+        <div class="alert-note" data-id="${alert.id}" title="Click to edit note">${alert.note || '<span class="alert-note-empty">+ add note</span>'}</div>
       </div>
       <button class="btn-remove" data-id="${alert.id}">×</button>
     `;
     list.appendChild(item);
   }
+
+  // Inline note bewerken
+  list.querySelectorAll('.alert-note').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (el.querySelector('input')) return; // al in edit mode
+
+      const id          = el.dataset.id;
+      const currentNote = el.textContent.trim() === '+ add note' ? '' : el.textContent.trim();
+
+      const input = document.createElement('input');
+      input.type        = 'text';
+      input.value       = currentNote;
+      input.placeholder = 'Add a note...';
+      input.className   = 'alert-note-field';
+      input.maxLength   = 60;
+
+      el.innerHTML = '';
+      el.appendChild(input);
+      input.focus();
+
+      async function saveNote() {
+        const newNote = input.value.trim();
+        const { alerts = [] } = await chrome.storage.local.get('alerts');
+        const alert = alerts.find(a => a.id === id);
+        if (alert) {
+          alert.note = newNote;
+          await chrome.storage.local.set({ alerts });
+        }
+        el.innerHTML = newNote
+          ? newNote
+          : '<span class="alert-note-empty">+ add note</span>';
+      }
+
+      input.addEventListener('blur', saveNote);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter')  { input.blur(); }
+        if (e.key === 'Escape') { el.innerHTML = currentNote || '<span class="alert-note-empty">+ add note</span>'; }
+      });
+    });
+  });
 
   list.querySelectorAll('.alert-toggle').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -147,7 +193,6 @@ async function renderAlerts(alerts) {
 
     btn.addEventListener('click', async () => {
       if (!pending) {
-        // Eerste klik: toon bevestiging
         pending = true;
         btn.textContent = '✓';
         btn.style.color = '#ef4444';
@@ -159,7 +204,6 @@ async function renderAlerts(alerts) {
           btn.title = '';
         }, 2000);
       } else {
-        // Tweede klik: echt verwijderen
         clearTimeout(confirmTimer);
         let { alerts = [] } = await chrome.storage.local.get('alerts');
         alerts = alerts.filter(a => a.id !== btn.dataset.id);
