@@ -53,22 +53,6 @@ function initSettingsTab() {
         <button class="alert-toggle on" id="toggleNotifications"></button>
       </div>
 
-      <div id="timeoutRow">
-        <div class="settings-sublabel">Timeout</div>
-        <div class="btn-group">
-          <button class="btn-option" data-timeout="5">5 sec</button>
-          <button class="btn-option active" data-timeout="10">10 sec</button>
-          <button class="btn-option" data-timeout="15">15 sec</button>
-          <button class="btn-option" data-timeout="custom">Custom</button>
-        </div>
-        <div class="custom-slider-row" id="timeoutCustomRow">
-          <div class="slider-header">
-            <span style="font-size:10px;color:#3a4560">Custom timeout</span>
-            <span class="radius-value"><span id="timeoutValue">10</span> s</span>
-          </div>
-          <input type="range" id="timeoutSlider" min="3" max="60" step="1" value="10">
-        </div>
-
         <div class="settings-sublabel" style="margin-top:12px">Sound</div>
         <div class="btn-group" style="margin-bottom:6px">
           <button class="btn-option" data-sound="off">🔕 Off</button>
@@ -267,8 +251,8 @@ function setupSettingsEvents() {
 // ─── INSTELLINGEN LADEN (geroepen vanuit popup.js) ─────────────────────────
 
 async function initSettings() {
-  const { hideGround = true, notificationsEnabled = true, notificationTimeout = 10, notifShow } =
-    await chrome.storage.local.get(['hideGround', 'notificationsEnabled', 'notificationTimeout', 'notifShow']);
+  const { hideGround = true, notificationsEnabled = true, notifShow } =
+    await chrome.storage.local.get(['hideGround', 'notificationsEnabled', 'notifShow']);
 
   // Ground toggle
   const toggleGround = document.getElementById('toggleGround');
@@ -283,12 +267,9 @@ async function initSettings() {
 
   // Notificaties toggle
   const toggleNotifications = document.getElementById('toggleNotifications');
-  const timeoutRow          = document.getElementById('timeoutRow');
 
   function applyNotifEnabled(val) {
-    toggleNotifications.className  = `alert-toggle ${val ? 'on' : ''}`;
-    timeoutRow.style.opacity       = val ? '1' : '0.35';
-    timeoutRow.style.pointerEvents = val ? '' : 'none';
+    toggleNotifications.className = `alert-toggle ${val ? 'on' : ''}`;
   }
 
   applyNotifEnabled(notificationsEnabled);
@@ -298,51 +279,6 @@ async function initSettings() {
     await chrome.storage.local.set({ notificationsEnabled: newVal });
     applyNotifEnabled(newVal);
     showSaved('Notifications');
-  });
-
-  // Timeout knoppen
-  const timeoutSlider  = document.getElementById('timeoutSlider');
-  const timeoutValueEl = document.getElementById('timeoutValue');
-  const timeoutPresets = [5, 10, 15];
-
-  function initTimeoutButtons(current) {
-    const isCustom = !timeoutPresets.includes(current);
-    document.querySelectorAll('[data-timeout]').forEach(btn => {
-      const val = btn.dataset.timeout;
-      btn.classList.toggle('active', val === 'custom' ? isCustom : parseInt(val) === current);
-    });
-    document.getElementById('timeoutCustomRow').classList.toggle('visible', isCustom);
-    if (isCustom) {
-      timeoutSlider.value       = current;
-      timeoutValueEl.textContent = current;
-    }
-  }
-
-  initTimeoutButtons(notificationTimeout);
-
-  document.querySelectorAll('[data-timeout]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const val = btn.dataset.timeout;
-      document.querySelectorAll('[data-timeout]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      if (val === 'custom') {
-        const { notificationTimeout: cur = 10 } = await chrome.storage.local.get('notificationTimeout');
-        document.getElementById('timeoutCustomRow').classList.add('visible');
-        timeoutSlider.value       = cur;
-        timeoutValueEl.textContent = cur;
-      } else {
-        await chrome.storage.local.set({ notificationTimeout: parseInt(val) });
-        document.getElementById('timeoutCustomRow').classList.remove('visible');
-        showSaved('Timeout');
-      }
-    });
-  });
-
-  timeoutSlider.addEventListener('input',  () => { timeoutValueEl.textContent = timeoutSlider.value; });
-  timeoutSlider.addEventListener('change', () => {
-    chrome.storage.local.set({ notificationTimeout: parseInt(timeoutSlider.value) });
-    showSaved('Timeout');
   });
 
   // Geluid knoppen
@@ -488,7 +424,7 @@ async function initSettings() {
 
   const BACKUP_KEYS = [
     'alerts', 'lat', 'lon', 'radius',
-    'hideGround', 'notificationsEnabled', 'notificationTimeout', 'notifShow',
+    'hideGround', 'notificationsEnabled', 'notifShow',
     'alertSound', 'alertVolume',
     'startupTab', 'lastTab',
     'mutedAircraft'
