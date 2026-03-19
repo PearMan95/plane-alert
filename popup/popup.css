@@ -256,7 +256,7 @@ body {
 .tab.active { color: #60a5fa; border-bottom-color: #60a5fa; }
 
 /* ── Panels wrapper ── */
-.panels-wrapper { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+.panels-wrapper { position: relative; flex: 1; min-height: 0; }
 
 .disabled-overlay {
   display: none;
