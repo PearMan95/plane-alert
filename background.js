@@ -17,7 +17,7 @@ async function playAlertSound(sound, volume) {
   if (!sound || sound === 'off') return;
   try {
     await ensureOffscreenDocument();
-    chrome.runtime.sendMessage({ type: 'playSound', sound, volume });
+    await chrome.runtime.sendMessage({ type: 'playSound', sound, volume }).catch(() => {});
   } catch (err) {
     console.warn('[FlightAlert] Could not play sound:', err);
   }
