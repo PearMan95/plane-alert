@@ -52,6 +52,7 @@ let sortMode         = 'speed';
 let filterMatches    = false;
 let filterAirborne   = false;
 let minAltitude      = 0;
+let liveSettingsCache = null;
 
 // ─── HELPERS ───────────────────────────────────────────────────────────────
 
@@ -152,6 +153,7 @@ function setupLiveEvents() {
 
   document.getElementById('minAltSlider').addEventListener('input', async (e) => {
     minAltitude = parseInt(e.target.value);
+    await chrome.storage.local.set({ minAltitude });
     const { units: u = 'metric' } = await chrome.storage.local.get('units');
     if (minAltitude === 0) {
       document.getElementById('minAltValue').textContent = u === 'imperial' ? '0 ft' : '0 m';
@@ -167,8 +169,12 @@ function setupLiveEvents() {
 // ─── RENDER LIJST ──────────────────────────────────────────────────────────
 
 async function renderAircraftList() {
-  const { lat, lon, hideGround = true, alerts = [], caughtAircraft = [], units = 'metric' } =
-    await chrome.storage.local.get(['lat', 'lon', 'hideGround', 'alerts', 'caughtAircraft', 'units']);
+  // Gebruik gecachede settings; ververs cache alleen bij eerste aanroep of expliciete refresh
+  if (!liveSettingsCache) {
+    const data = await chrome.storage.local.get(['lat', 'lon', 'hideGround', 'alerts', 'caughtAircraft', 'units']);
+    liveSettingsCache = data;
+  }
+  const { lat, lon, hideGround = true, alerts = [], caughtAircraft = [], units = 'metric' } = liveSettingsCache;
 
   const list    = document.getElementById('acList');
   const countEl = document.getElementById('liveCount');
@@ -230,7 +236,13 @@ async function renderAircraftList() {
     default:         aircraft.sort((a, b) => (b.gs || 0) - (a.gs || 0));                  break;
   }
 
-  countEl.textContent = aircraft.length;
+  // In range = totaal na hideGround filter (globale instelling), maar vóór live-tab filters
+  const totalInRange = (() => {
+    let base = [...lastAcData];
+    if (hideGround !== false) base = base.filter(ac => !isOnGround(ac));
+    return base.length;
+  })();
+  countEl.textContent = totalInRange;
   matchEl.textContent = aircraft.filter(isMatch).length;
 
   if (aircraft.length === 0) {
@@ -383,6 +395,11 @@ async function buildDropdownContent(dropdown, ac, units, caught) {
 // ─── LADEN ─────────────────────────────────────────────────────────────────
 
 async function loadLive(forceNew = false) {
+  liveSettingsCache = null; // ververs settings cache bij elke load
+  const { minAltitude: savedAlt = 0 } = await chrome.storage.local.get('minAltitude');
+  minAltitude = savedAlt;
+  const slider = document.getElementById('minAltSlider');
+  if (slider) slider.value = savedAlt;
   const { lat, lon, radius = 50, lastPoll, cachedAircraft } =
     await chrome.storage.local.get(['lat', 'lon', 'radius', 'lastPoll', 'cachedAircraft']);
 
