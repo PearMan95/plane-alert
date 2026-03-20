@@ -654,47 +654,41 @@ input::placeholder { color: #3a4560; }
 }
 .refresh-btn:hover { color: #60a5fa; border-color: #2a3860; }
 
-/* ── Detail paneel ── */
-.detail-panel {
+/* ── Aircraft wrapper & dropdown ── */
+.ac-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.ac-item.open {
+  border-color: #2a4a8a;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.ac-chevron {
+  font-size: 8px;
+  color: #3a4560;
+  flex-shrink: 0;
+}
+
+.ac-dropdown {
   display: none;
-  margin-top: 10px;
   background: #0d1120;
   border: 1px solid #2a4a8a;
-  border-radius: 10px;
-  padding: 12px;
+  border-top: none;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  padding: 10px;
   animation: slideIn 0.15s ease;
 }
 
-.detail-panel.visible { display: block; }
+.ac-dropdown.open { display: block; }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
-.detail-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.detail-callsign {
-  font-family: 'Space Mono', monospace;
-  font-size: 15px;
-  font-weight: 700;
-  color: #60a5fa;
-}
-
-.detail-close {
-  background: none;
-  border: none;
-  color: #4b5680;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 2px 4px;
-}
-.detail-close:hover { color: #fff; }
 
 .detail-grid {
   display: grid;
