@@ -136,7 +136,7 @@ async function renderAlerts(alerts) {
         <div class="alert-type-label">${typeLabels[alert.type] || alert.type}</div>
         <div class="alert-note" data-id="${alert.id}" title="Click to edit note">${alert.note || '<span class="alert-note-empty">+ add note</span>'}</div>
       </div>
-      <button class="btn-remove" data-id="${alert.id}">×</button>
+      <button class="btn-remove" data-id="${alert.id}">X</button>
     `;
     list.appendChild(item);
   }
