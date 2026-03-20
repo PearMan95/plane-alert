@@ -214,7 +214,7 @@ body {
 }
 
 .help-row.faq { grid-template-columns: 1fr; gap: 2px; }
-.help-row.faq span:first-child { color: #c0cce8; font-weight: 600; }
+.help-row.faq span:first-child, .help-q { color: #c0cce8; font-weight: 600; }
 
 .help-key {
   font-family: 'Space Mono', monospace;

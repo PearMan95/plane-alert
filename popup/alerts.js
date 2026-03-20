@@ -71,6 +71,13 @@ function setupAlertsEvents() {
     if (!isFlag) document.getElementById('alertValue').placeholder = placeholders[e.target.value] || '';
   });
 
+  // Enter in waarde-veld of notitieveld triggert toevoegen
+  ['alertValue', 'alertNote'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('btnAdd').click();
+    });
+  });
+
   document.getElementById('btnAdd').addEventListener('click', async () => {
     const type   = document.getElementById('alertType').value;
     const isFlag = type === 'dbflag';

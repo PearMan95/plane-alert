@@ -327,12 +327,32 @@ function setupSettingsEvents() {
 // ─── INSTELLINGEN HERLADEN (na backup import) ──────────────────────────────
 
 async function loadSettings() {
+  // Onthoud welke kaarten open waren voor we de HTML herinjekten
+  const openCards = [];
+  document.querySelectorAll('.settings-card-body').forEach(body => {
+    if (body.style.display !== 'none') openCards.push(body.id);
+  });
+
   initSettingsTab();
+
   const { lat, lon, radius = 50, units = 'metric' } =
     await chrome.storage.local.get(['lat', 'lon', 'radius', 'units']);
   if (lat && lon) updateCoordDisplay(lat, lon);
   initRadiusButtons(radius, units);
   await initSettings();
+
+  // Herstel open kaarten
+  openCards.forEach(id => {
+    const body = document.getElementById(id);
+    if (body) {
+      body.style.display = 'block';
+      const toggle = body.previousElementSibling;
+      if (toggle) {
+        const chevron = toggle.querySelector('.settings-chevron');
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+      }
+    }
+  });
 }
 
 // ─── INSTELLINGEN LADEN (geroepen vanuit popup.js) ─────────────────────────
