@@ -44,6 +44,12 @@ document.getElementById('helpOverlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) e.currentTarget.classList.remove('visible');
 });
 
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.getElementById('helpOverlay').classList.remove('visible');
+  }
+});
+
 // ─── MASTER TOGGLE ─────────────────────────────────────────────────────────
 
 function applyEnabledUI(enabled) {
