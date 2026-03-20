@@ -201,12 +201,12 @@ async function renderAlerts(alerts) {
     btn.addEventListener('click', async () => {
       if (!pending) {
         pending = true;
-        btn.textContent = '✓';
+        btn.textContent = '✗';
         btn.style.color = '#ef4444';
         btn.title = 'Click again to remove';
         confirmTimer = setTimeout(() => {
           pending = false;
-          btn.textContent = '×';
+          btn.textContent = 'X';
           btn.style.color = '';
           btn.title = '';
         }, 2000);
