@@ -17,7 +17,7 @@ A Chrome extension that notifies you when a tracked aircraft enters your radius 
 - **Catch aircraft** — mark an aircraft as caught directly from the notification or the Live tab detail panel. Caught aircraft won't trigger future notifications. Manage your caught list in the History tab.
 - **Alert sound** — choose from Ping, Radar, Alert or Chime with adjustable volume (soft, medium, loud)
 - **Live tab** — see all aircraft in your radius in real time, with sorting and filtering options. Cached data loads instantly on open.
-- **Detail panel** — click any aircraft to see full details and open it on the airplanes.live globe
+- **Detail dropdown** — click any aircraft to expand its details inline: registration, type, altitude, speed, route, squawk and heading. Open it on the map or mark it as caught directly from the dropdown.
 - **Notification history** — a log of every triggered alert with callsign, time and flight details. Click any entry to open it on the map.
 - **Units** — switch between metric (km · m · km/h) and imperial (nm · ft · kts)
 - **Settings** — organised into collapsible cards: Location, Filters, Units, Notifications, Startup tab, and Backup & Test
