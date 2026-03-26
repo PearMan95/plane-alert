@@ -40,6 +40,5 @@
         "chrome-extension://*/*"
       ]
     }
-  ],
-  "uninstall_url": "https://pearman95.github.io/plane-alert/uninstall.html"
+  ]
 }
