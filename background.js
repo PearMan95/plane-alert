@@ -27,6 +27,8 @@ const API_BASE = 'https://api.airplanes.live/v2/point';
 const POLL_INTERVAL_MINUTES = 1;
 
 // Start alarm on install
+chrome.runtime.setUninstallURL('https://pearman95.github.io/plane-alert/uninstall.html');
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get('enabled', ({ enabled }) => {
     if (enabled !== false) {
@@ -67,36 +69,14 @@ chrome.runtime.onMessage.addListener((msg) => {
     } else {
       chrome.alarms.clear('poll');
       chrome.action.setBadgeText({ text: '' });
-      chrome.storage.local.set({ inRange: {}, skipPolls: 0 });
+      chrome.storage.local.set({ inRange: {} });
     }
   }
 });
 
-// ─── BADGE HELPERS ─────────────────────────────────────────────────────────
-
-function setBadgeError(text, color) {
-  chrome.action.setBadgeText({ text });
-  chrome.action.setBadgeBackgroundColor({ color });
-}
-
-function restoreCountBadge(count) {
-  chrome.action.setBadgeText({ text: count > 0 ? String(count) : '' });
-  chrome.action.setBadgeBackgroundColor({ color: '#0052cc' });
-}
-
-// ─── POLLING ───────────────────────────────────────────────────────────────
-
 async function pollAircraft() {
   const { enabled = true } = await chrome.storage.local.get('enabled');
   if (!enabled) return;
-
-  // Skip poll if we're in a rate-limit cooldown
-  const { skipPolls = 0 } = await chrome.storage.local.get('skipPolls');
-  if (skipPolls > 0) {
-    await chrome.storage.local.set({ skipPolls: skipPolls - 1 });
-    console.log(`[FlightAlert] Skipping poll due to rate limit (${skipPolls} remaining)`);
-    return;
-  }
 
   const config = await getConfig();
   if (!config.lat || !config.lon || !config.alerts || config.alerts.length === 0) return;
@@ -111,16 +91,6 @@ async function pollAircraft() {
     data = await resp.json();
   } catch (err) {
     console.error('[FlightAlert] API error:', err);
-
-    if (err.message && err.message.includes('429')) {
-      // Rate limited — toon LMT badge en sla 2 polls over
-      await chrome.storage.local.set({ skipPolls: 2 });
-      setBadgeError('LMT', '#E24B4A');
-      console.warn('[FlightAlert] Rate limited (429), skipping next 2 polls');
-    } else {
-      // Netwerk fout — toon NET badge en wacht op volgende poll
-      setBadgeError('NET', '#BA7517');
-    }
     return;
   }
 
@@ -204,10 +174,10 @@ async function pollAircraft() {
     console.log(`[FlightAlert] New in range: ${ac.flight || ac.hex} for alert "${matchingAlert.label}"`);
   }
 
-  // Poll geslaagd — wis eventuele fout-badge en herstel telbadge
-  await chrome.storage.local.set({ skipPolls: 0 });
+  // Update badge to show current number of matches in range
   const matchCount = Object.keys(newInRange).length;
-  restoreCountBadge(matchCount);
+  chrome.action.setBadgeText({ text: matchCount > 0 ? String(matchCount) : '' });
+  chrome.action.setBadgeBackgroundColor({ color: '#0052cc' });
 
   await chrome.storage.local.set({ inRange: newInRange, lastPoll: now, lastCount: aircraft.length, cachedAircraft: data.ac || [] });
 }
