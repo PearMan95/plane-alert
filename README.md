@@ -2,25 +2,22 @@
 
 A Chrome extension that notifies you when a tracked aircraft enters your radius — powered by the [airplanes.live](https://airplanes.live) API.
 
-![Version](https://img.shields.io/badge/version-1.4.0-blue)
+![Version](https://img.shields.io/badge/version-1.3.0-blue)
 ![Manifest](https://img.shields.io/badge/manifest-v3-green)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F2F31W8JHG)
+![License](https://img.shields.io/badge/license-GPL%20v3-lightgrey)
 
 ---
 
 ## Features
 
-- **Custom alerts** — track aircraft by registration, flight number, aircraft type, airline, ICAO hex address, or category (military, interesting, PIA, LADD). Add an optional personal note to each alert.
+- **Custom alerts** — track aircraft by registration, flight number, aircraft type, airline, ICAO hex address, or category (military, interesting, PIA, LADD)
 - **Desktop notifications** — get notified the moment a match enters your radius, with configurable content (altitude, speed, route, direction). Notifications persist in your OS notification centre.
 - **Catch aircraft** — mark an aircraft as caught directly from the notification or the Live tab detail panel. Caught aircraft won't trigger future notifications. Manage your caught list in the History tab.
 - **Alert sound** — choose from Ping, Radar, Alert or Chime with adjustable volume (soft, medium, loud)
-- **Live tab** — see all aircraft in your radius in real time, with sorting and filtering options. Cached data loads instantly on open.
-- **Detail dropdown** — click any aircraft to expand its details inline: registration, type, altitude, speed, route, squawk and heading. Open it on the map or mark it as caught directly from the dropdown.
-- **Notification history** — a log of every triggered alert with callsign, time and flight details. Click any entry to open it on the map.
-- **Units** — switch between metric (km · m · km/h) and imperial (nm · ft · kts)
-- **Settings** — organised into collapsible cards: Location, Filters, Units, Notifications, Startup tab, and Backup & Test
+- **Live tab** — see all aircraft in your radius in real time, with sorting and filtering options
+- **Detail panel** — click any aircraft to see full details and open it on the airplanes.live globe
+- **Notification history** — a log of every triggered alert with callsign, time and flight details
+- **Settings** — organised into collapsible cards: Location, Filters, Notifications, Startup tab, and Backup & Test
 - **Startup tab** — choose which tab opens on launch, or always return to the last tab you were on
 - **Full backup** — export and import all your settings and alerts as a JSON file
 - **Master toggle** — pause and resume tracking instantly from the header
@@ -90,7 +87,6 @@ plane-alert/
 ## Roadmap
 
 - [ ] Statistics — all-time counters, most seen aircraft types
-- [ ] Live tab auto-refresh — automatically reload aircraft at a set interval
 - [ ] Multiple locations (e.g. home and work)
 - [ ] Chrome Web Store release (?)
 
@@ -104,4 +100,8 @@ Flight data provided by [airplanes.live](https://airplanes.live) — a community
 
 ## License
 
-MIT — free to use, modify and distribute.
+This project is licensed under the **GNU General Public License v3.0**.
+
+You are free to view, modify and redistribute the source code, but any derivative work must also be open source under the same license.
+
+**Publishing this extension or any derivative to a browser extension store (Chrome, Firefox, Edge, etc.) requires explicit written permission from the author.** See the [LICENSE](LICENSE) file for full details.
