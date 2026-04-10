@@ -9,6 +9,7 @@ body {
   display: flex;
   flex-direction: column;
   max-height: 600px;
+  overflow: hidden;
 }
 
 /* ── Header ── */
@@ -982,6 +983,43 @@ input::placeholder { color: #3a4560; }
 .saved-toast.visible {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* ── Attribution footer ── */
+.attribution-footer {
+  border-top: 1px solid #1a2040;
+  padding: 7px 18px;
+  background: #08090f;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.attribution-logo {
+  height: 18px;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+  display: block;
+}
+
+.attribution-brand:hover .attribution-logo {
+  opacity: 1;
+}
+
+.attribution-coverage {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #60a5fa;
+  text-decoration: none;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+}
+
+.attribution-coverage:hover {
+  opacity: 1;
+  text-decoration: underline;
 }
 
 /* ── Donate footer ── */
