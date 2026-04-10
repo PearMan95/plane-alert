@@ -149,15 +149,17 @@ function setupLiveEvents() {
     renderAircraftList();
   });
 
-  document.getElementById('filterMatches').addEventListener('click', (e) => {
+  document.getElementById('filterMatches').addEventListener('click', async (e) => {
     filterMatches = !filterMatches;
     e.target.classList.toggle('active', filterMatches);
+    await chrome.storage.local.set({ liveFilterMatches: filterMatches });
     renderAircraftList();
   });
 
-  document.getElementById('filterAirborne').addEventListener('click', (e) => {
+  document.getElementById('filterAirborne').addEventListener('click', async (e) => {
     filterAirborne = !filterAirborne;
     e.target.classList.toggle('active', filterAirborne);
+    await chrome.storage.local.set({ liveFilterAirborne: filterAirborne });
     renderAircraftList();
   });
 
@@ -414,14 +416,21 @@ async function buildDropdownContent(dropdown, ac, units, caught) {
 
 async function loadLive(forceNew = false) {
   liveSettingsCache = null; // ververs settings cache bij elke load
-  const { minAltitude: savedAlt = 0, liveSortMode: savedSort = 'speed' } =
-    await chrome.storage.local.get(['minAltitude', 'liveSortMode']);
-  minAltitude = savedAlt;
-  sortMode = savedSort;
+  const { minAltitude: savedAlt = 0, liveSortMode: savedSort = 'speed',
+          liveFilterMatches: savedMatches = false, liveFilterAirborne: savedAirborne = false } =
+    await chrome.storage.local.get(['minAltitude', 'liveSortMode', 'liveFilterMatches', 'liveFilterAirborne']);
+  minAltitude   = savedAlt;
+  sortMode      = savedSort;
+  filterMatches  = savedMatches;
+  filterAirborne = savedAirborne;
   const slider = document.getElementById('minAltSlider');
   if (slider) slider.value = savedAlt;
   const sortEl = document.getElementById('sortBy');
   if (sortEl) sortEl.value = savedSort;
+  const btnMatches  = document.getElementById('filterMatches');
+  const btnAirborne = document.getElementById('filterAirborne');
+  if (btnMatches)  btnMatches.classList.toggle('active', filterMatches);
+  if (btnAirborne) btnAirborne.classList.toggle('active', filterAirborne);
   const { lat, lon, radius = 50, lastPoll, cachedAircraft } =
     await chrome.storage.local.get(['lat', 'lon', 'radius', 'lastPoll', 'cachedAircraft']);
 
