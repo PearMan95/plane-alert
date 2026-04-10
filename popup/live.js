@@ -29,6 +29,9 @@ function initLiveTab() {
           <button class="filter-btn" id="filterAirborne">✈️ Airborne only</button>
         </div>
       </div>
+      <div class="control-row">
+        <input type="text" id="liveSearch" class="live-search" placeholder="Search callsign or registration…">
+      </div>
       <div class="control-row" id="altFilterRow">
         <label class="alt-label">Min. altitude</label>
         <input type="range" id="minAltSlider" min="0" max="12000" step="500" value="0" style="flex:1">
@@ -52,6 +55,7 @@ let sortMode         = 'speed';
 let filterMatches    = false;
 let filterAirborne   = false;
 let minAltitude      = 0;
+let searchQuery      = '';
 let liveSettingsCache = null;
 
 // ─── HELPERS ───────────────────────────────────────────────────────────────
@@ -134,20 +138,28 @@ function setupLiveEvents() {
     loadLive(true);
   });
 
-  document.getElementById('sortBy').addEventListener('change', (e) => {
+  document.getElementById('sortBy').addEventListener('change', async (e) => {
     sortMode = e.target.value;
+    await chrome.storage.local.set({ liveSortMode: sortMode });
     renderAircraftList();
   });
 
-  document.getElementById('filterMatches').addEventListener('click', (e) => {
+  document.getElementById('liveSearch').addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim().toUpperCase();
+    renderAircraftList();
+  });
+
+  document.getElementById('filterMatches').addEventListener('click', async (e) => {
     filterMatches = !filterMatches;
     e.target.classList.toggle('active', filterMatches);
+    await chrome.storage.local.set({ liveFilterMatches: filterMatches });
     renderAircraftList();
   });
 
-  document.getElementById('filterAirborne').addEventListener('click', (e) => {
+  document.getElementById('filterAirborne').addEventListener('click', async (e) => {
     filterAirborne = !filterAirborne;
     e.target.classList.toggle('active', filterAirborne);
+    await chrome.storage.local.set({ liveFilterAirborne: filterAirborne });
     renderAircraftList();
   });
 
@@ -211,6 +223,13 @@ async function renderAircraftList() {
   if (hideGround !== false) aircraft = aircraft.filter(ac => !isOnGround(ac));
   if (filterAirborne)       aircraft = aircraft.filter(ac => !isOnGround(ac));
   if (filterMatches)        aircraft = aircraft.filter(ac => isMatch(ac));
+  if (searchQuery) {
+    aircraft = aircraft.filter(ac => {
+      const flight = (ac.flight || '').toUpperCase().trim();
+      const reg    = (ac.r     || '').toUpperCase().trim();
+      return flight.includes(searchQuery) || reg.includes(searchQuery);
+    });
+  }
   if (minAltitude > 0) {
     aircraft = aircraft.filter(ac => {
       if (!ac.alt_baro || ac.alt_baro === 'ground') return false;
@@ -397,10 +416,21 @@ async function buildDropdownContent(dropdown, ac, units, caught) {
 
 async function loadLive(forceNew = false) {
   liveSettingsCache = null; // ververs settings cache bij elke load
-  const { minAltitude: savedAlt = 0 } = await chrome.storage.local.get('minAltitude');
-  minAltitude = savedAlt;
+  const { minAltitude: savedAlt = 0, liveSortMode: savedSort = 'speed',
+          liveFilterMatches: savedMatches = false, liveFilterAirborne: savedAirborne = false } =
+    await chrome.storage.local.get(['minAltitude', 'liveSortMode', 'liveFilterMatches', 'liveFilterAirborne']);
+  minAltitude   = savedAlt;
+  sortMode      = savedSort;
+  filterMatches  = savedMatches;
+  filterAirborne = savedAirborne;
   const slider = document.getElementById('minAltSlider');
   if (slider) slider.value = savedAlt;
+  const sortEl = document.getElementById('sortBy');
+  if (sortEl) sortEl.value = savedSort;
+  const btnMatches  = document.getElementById('filterMatches');
+  const btnAirborne = document.getElementById('filterAirborne');
+  if (btnMatches)  btnMatches.classList.toggle('active', filterMatches);
+  if (btnAirborne) btnAirborne.classList.toggle('active', filterAirborne);
   const { lat, lon, radius = 50, lastPoll, cachedAircraft } =
     await chrome.storage.local.get(['lat', 'lon', 'radius', 'lastPoll', 'cachedAircraft']);
 

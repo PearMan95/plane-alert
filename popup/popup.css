@@ -628,6 +628,22 @@ input::placeholder { color: #3a4560; }
   white-space: nowrap;
 }
 
+.live-search {
+  flex: 1;
+  font-size: 11px;
+  font-family: 'Outfit', sans-serif;
+  padding: 5px 8px;
+  background: #0f1322;
+  border: 1px solid #1e2840;
+  border-radius: 6px;
+  color: #e8e4f0;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.live-search::placeholder { color: #3a4560; }
+.live-search:focus { border-color: #2a4a8a; }
+
 .alt-value {
   font-family: 'Space Mono', monospace;
   font-size: 10px;
