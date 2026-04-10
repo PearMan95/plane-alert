@@ -997,14 +997,14 @@ input::placeholder { color: #3a4560; }
 }
 
 .attribution-logo {
-  height: 18px;
-  opacity: 0.75;
+  height: 20px;
+  opacity: 1;
   transition: opacity 0.2s;
   display: block;
 }
 
 .attribution-brand:hover .attribution-logo {
-  opacity: 1;
+  opacity: 0.75;
 }
 
 .attribution-coverage {
