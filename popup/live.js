@@ -318,6 +318,7 @@ async function renderAircraftList() {
         item.querySelector('.ac-chevron').textContent = '▲';
         dropdown.classList.add('open');
         await buildDropdownContent(dropdown, ac, units, caught);
+        wrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     });
 
