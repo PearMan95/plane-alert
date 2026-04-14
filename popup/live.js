@@ -11,8 +11,8 @@ function initLiveTab() {
         <div class="value" id="liveCount">—</div>
       </div>
       <div class="stat-card">
-        <div class="label">Matches</div>
-        <div class="value green" id="liveMatches">—</div>
+        <div class="label">Matching</div>
+        <div class="value green" id="liveMatching">—</div>
       </div>
     </div>
     <div class="section-label">Aircraft nearby</div>
@@ -25,7 +25,7 @@ function initLiveTab() {
           <option value="flight">Sort: A–Z</option>
         </select>
         <div class="filter-toggles">
-          <button class="filter-btn" id="filterMatches">Matches only</button>
+          <button class="filter-btn" id="filterMatching">Matching only</button>
           <button class="filter-btn" id="filterAirborne">✈️ Airborne only</button>
         </div>
       </div>
@@ -52,7 +52,7 @@ let lastManualLoad   = 0;
 let lastAcData       = [];
 let currentDetailHex = null;
 let sortMode         = 'speed';
-let filterMatches    = false;
+let filterMatching    = false;
 let filterAirborne   = false;
 let minAltitude      = 0;
 let searchQuery      = '';
@@ -149,10 +149,10 @@ function setupLiveEvents() {
     renderAircraftList();
   });
 
-  document.getElementById('filterMatches').addEventListener('click', async (e) => {
-    filterMatches = !filterMatches;
-    e.target.classList.toggle('active', filterMatches);
-    await chrome.storage.local.set({ liveFilterMatches: filterMatches });
+  document.getElementById('filterMatching').addEventListener('click', async (e) => {
+    filterMatching = !filterMatching;
+    e.target.classList.toggle('active', filterMatching);
+    await chrome.storage.local.set({ liveFilterMatching: filterMatching });
     renderAircraftList();
   });
 
@@ -190,7 +190,7 @@ async function renderAircraftList() {
 
   const list    = document.getElementById('acList');
   const countEl = document.getElementById('liveCount');
-  const matchEl = document.getElementById('liveMatches');
+  const matchEl = document.getElementById('liveMatching');
 
   const DB_FLAGS = { military: 1, interesting: 2, pia: 4, ladd: 8 };
 
@@ -222,7 +222,7 @@ async function renderAircraftList() {
 
   if (hideGround !== false) aircraft = aircraft.filter(ac => !isOnGround(ac));
   if (filterAirborne)       aircraft = aircraft.filter(ac => !isOnGround(ac));
-  if (filterMatches)        aircraft = aircraft.filter(ac => isMatch(ac));
+  if (filterMatching)        aircraft = aircraft.filter(ac => isMatch(ac));
   if (searchQuery) {
     aircraft = aircraft.filter(ac => {
       const flight = (ac.flight || '').toUpperCase().trim();
@@ -417,19 +417,19 @@ async function buildDropdownContent(dropdown, ac, units, caught) {
 async function loadLive(forceNew = false) {
   liveSettingsCache = null; // ververs settings cache bij elke load
   const { minAltitude: savedAlt = 0, liveSortMode: savedSort = 'speed',
-          liveFilterMatches: savedMatches = false, liveFilterAirborne: savedAirborne = false } =
-    await chrome.storage.local.get(['minAltitude', 'liveSortMode', 'liveFilterMatches', 'liveFilterAirborne']);
+          liveFilterMatching: savedMatching = false, liveFilterAirborne: savedAirborne = false } =
+    await chrome.storage.local.get(['minAltitude', 'liveSortMode', 'liveFilterMatching', 'liveFilterAirborne']);
   minAltitude   = savedAlt;
   sortMode      = savedSort;
-  filterMatches  = savedMatches;
+  filterMatching  = savedMatching;
   filterAirborne = savedAirborne;
   const slider = document.getElementById('minAltSlider');
   if (slider) slider.value = savedAlt;
   const sortEl = document.getElementById('sortBy');
   if (sortEl) sortEl.value = savedSort;
-  const btnMatches  = document.getElementById('filterMatches');
+  const btnMatching  = document.getElementById('filterMatching');
   const btnAirborne = document.getElementById('filterAirborne');
-  if (btnMatches)  btnMatches.classList.toggle('active', filterMatches);
+  if (btnMatching)  btnMatching.classList.toggle('active', filterMatching);
   if (btnAirborne) btnAirborne.classList.toggle('active', filterAirborne);
   const { lat, lon, radius = 50, lastPoll, cachedAircraft } =
     await chrome.storage.local.get(['lat', 'lon', 'radius', 'lastPoll', 'cachedAircraft']);
