@@ -1,0 +1,268 @@
+// background.js — runs in the background and polls the API
+// Depends on shared.js (loaded via manifest.json background.scripts)
+
+// ─── OFFSCREEN DOCUMENT ────────────────────────────────────────────────────
+importScripts('shared.js');
+
+async function ensureOffscreenDocument() {
+  const existing = await chrome.offscreen.hasDocument().catch(() => false);
+  if (!existing) {
+    await chrome.offscreen.createDocument({
+      url:    'offscreen.html',
+      reasons: ['AUDIO_PLAYBACK'],
+      justification: 'Play alert sound when aircraft is detected'
+    });
+  }
+}
+
+async function playAlertSound(sound, volume) {
+  if (!sound || sound === 'off') return;
+  try {
+    await ensureOffscreenDocument();
+    await chrome.runtime.sendMessage({ type: 'playSound', sound, volume }).catch(() => {});
+  } catch (err) {
+    console.warn('[FlightAlert] Could not play sound:', err);
+  }
+}
+
+const API_BASE = 'https://api.airplanes.live/v2/point';
+const POLL_INTERVAL_MINUTES = 1;
+
+chrome.runtime.setUninstallURL('https://pearman95.github.io/plane-alert/uninstall.html');
+
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.get('enabled', ({ enabled }) => {
+    if (enabled !== false) {
+      chrome.alarms.create('poll', { periodInMinutes: POLL_INTERVAL_MINUTES });
+    }
+  });
+  console.log('[FlightAlert] Installed, polling started');
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'poll') pollAircraft();
+});
+
+chrome.runtime.onStartup.addListener(async () => {
+  const { enabled = true } = await chrome.storage.local.get('enabled');
+  if (enabled) {
+    chrome.alarms.create('poll', { periodInMinutes: POLL_INTERVAL_MINUTES });
+    pollAircraft();
+
+    const { inRange = {} } = await chrome.storage.local.get('inRange');
+    const count = Object.keys(inRange).length;
+    chrome.action.setBadgeText({ text: count > 0 ? String(count) : '' });
+    chrome.action.setBadgeBackgroundColor({ color: '#0052cc' });
+  }
+});
+
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === 'pollNow') {
+    pollAircraft();
+  }
+  if (msg.type === 'setEnabled') {
+    if (msg.enabled) {
+      chrome.alarms.create('poll', { periodInMinutes: POLL_INTERVAL_MINUTES });
+      pollAircraft();
+    } else {
+      chrome.alarms.clear('poll');
+      chrome.action.setBadgeText({ text: '' });
+      chrome.storage.local.set({ inRange: {} });
+    }
+  }
+});
+
+async function pollAircraft() {
+  const { enabled = true } = await chrome.storage.local.get('enabled');
+  if (!enabled) return;
+
+  const config = await getConfig();
+  if (!config.lat || !config.lon || !config.alerts || config.alerts.length === 0) return;
+
+  const radiusNM = kmToNM(config.radius || 50);
+  const url = `${API_BASE}/${config.lat}/${config.lon}/${radiusNM}`;
+
+  let data;
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    data = await resp.json();
+  } catch (err) {
+    console.error('[FlightAlert] API error:', err);
+    return;
+  }
+
+  let aircraft = data.ac || [];
+
+  if (config.hideGround !== false) {
+    aircraft = aircraft.filter(ac => !isOnGround(ac));
+  }
+
+  const now = Date.now();
+
+  const { inRange = {}, caughtAircraft = [] } = await chrome.storage.local.get(['inRange', 'caughtAircraft']);
+  const newInRange = {};
+
+  for (const ac of aircraft) {
+    if (ac.hex && caughtAircraft.includes(ac.hex)) continue;
+
+    // matchesAlert komt uit shared.js
+    const matchingAlert = config.alerts.find(alert => alert.active && matchesAlert(ac, alert));
+    if (!matchingAlert) continue;
+
+    const key = ac.hex;
+    if (!key) continue;
+    newInRange[key] = true;
+
+    if (inRange[key]) continue;
+
+    inRange[key] = true;
+    await chrome.storage.local.set({ inRange });
+
+    const { notificationsEnabled = true, notifShow = {} } =
+      await chrome.storage.local.get(['notificationsEnabled', 'notifShow']);
+    const show = Object.assign({ reg: false, type: true, alt: true, speed: true, route: true, dir: true }, notifShow);
+
+    if (notificationsEnabled) {
+      const notifId = `notif_${key}_${now}`;
+      chrome.notifications.create(notifId, {
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title:   buildTitle(ac, matchingAlert, show),
+        message: buildMessage(ac, config, show),
+        buttons: [{ title: '🗺️ View on map' }, { title: '🎯 Mark as caught' }]
+      });
+    }
+
+    const { alertSound = 'ping', alertVolume = 0.5 } =
+      await chrome.storage.local.get(['alertSound', 'alertVolume']);
+    await playAlertSound(alertSound, alertVolume);
+
+    const callsign = show.reg ? (ac.r || ac.flight?.trim() || ac.hex) : (ac.flight?.trim() || ac.r || ac.hex);
+    const imperial = config.units === 'imperial';
+    const parts = [];
+    if (ac.alt_baro && ac.alt_baro !== 'ground') {
+      parts.push(imperial
+        ? `${Math.round(ac.alt_baro)} ft`
+        : `${Math.round(ac.alt_baro * 0.3048)} m`);
+    }
+    if (ac.gs) {
+      parts.push(imperial
+        ? `${Math.round(ac.gs)} kts`
+        : `${Math.round(ac.gs * 1.852)} km/h`);
+    }
+    const from = ac.orig_iata || ac.orig_icao;
+    const to   = ac.dest_iata || ac.dest_icao;
+    if (from && to) parts.push(`${from}→${to}`);
+    if (ac.t) parts.push(ac.t);
+
+    const { notifHistory = [] } = await chrome.storage.local.get('notifHistory');
+    notifHistory.push({ ts: now, callsign, detail: parts.join(' · ') || '—', hex: ac.hex });
+    if (notifHistory.length > 100) notifHistory.splice(0, notifHistory.length - 100);
+    await chrome.storage.local.set({ notifHistory });
+
+    console.log(`[FlightAlert] New in range: ${ac.flight || ac.hex} for alert "${matchingAlert.label}"`);
+  }
+
+  const matchCount = Object.keys(newInRange).length;
+  chrome.action.setBadgeText({ text: matchCount > 0 ? String(matchCount) : '' });
+  chrome.action.setBadgeBackgroundColor({ color: '#0052cc' });
+
+  await chrome.storage.local.set({ inRange: newInRange, lastPoll: now, lastCount: aircraft.length, cachedAircraft: data.ac || [] });
+}
+
+chrome.notifications.onButtonClicked.addListener(async (notifId, btnIdx) => {
+  if (btnIdx === 0) {
+    const hexParts = notifId.split('_');
+    const hex = hexParts.length >= 3 ? hexParts[1] : '';
+    chrome.tabs.create({ url: `https://globe.airplanes.live${hex ? `/?icao=${hex}` : ''}` });
+  }
+  if (btnIdx === 1) {
+    const parts = notifId.split('_');
+    if (parts.length >= 3) {
+      const hex = parts[1];
+      const { caughtAircraft = [], caughtAircraftLabels = {}, cachedAircraft = [] } =
+        await chrome.storage.local.get(['caughtAircraft', 'caughtAircraftLabels', 'cachedAircraft']);
+      if (!caughtAircraft.includes(hex)) {
+        caughtAircraft.push(hex);
+        const ac = cachedAircraft.find(a => a.hex === hex);
+        if (ac) {
+          const callsign = ac.flight?.trim() || '';
+          const reg      = ac.r || '';
+          caughtAircraftLabels[hex] = (callsign && reg && callsign !== reg)
+            ? `${callsign} (${reg})`
+            : callsign || reg || hex;
+        }
+        await chrome.storage.local.set({ caughtAircraft, caughtAircraftLabels });
+      }
+    }
+    chrome.notifications.clear(notifId);
+  }
+});
+
+function buildTitle(ac, alert, show = {}) {
+  const id    = show.reg ? (ac.r || ac.flight?.trim() || ac.hex) : (ac.flight?.trim() || ac.r || ac.hex);
+  const type  = (show.type !== false) && ac.t ? ` (${ac.t})` : '';
+  const emoji = alert.type === 'dbflag' && alert.value.toLowerCase() === 'military' ? '🪖' : '✈️';
+  return `${emoji} ${id}${type} spotted!`;
+}
+
+function calculateBearing(userLat, userLon, acLat, acLon) {
+  const dLon = (acLon - userLon) * Math.PI / 180;
+  const lat1 = userLat * Math.PI / 180;
+  const lat2 = acLat  * Math.PI / 180;
+
+  const x = Math.sin(dLon) * Math.cos(lat2);
+  const y = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+  const angle = (Math.atan2(x, y) * 180 / Math.PI + 360) % 360;
+
+  const directions = ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'];
+  return directions[Math.round(angle / 45) % 8];
+}
+
+function buildMessage(ac, config, show = {}) {
+  const parts = [];
+  const imperial = config.units === 'imperial';
+
+  if (show.alt !== false) {
+    if (ac.alt_baro && ac.alt_baro !== 'ground') {
+      const altitude = imperial
+        ? `${Math.round(ac.alt_baro).toLocaleString()} ft`
+        : `${Math.round(ac.alt_baro * 0.3048)} m`;
+      parts.push(altitude);
+    }
+  }
+
+  if (show.speed !== false) {
+    const speed = ac.gs
+      ? (imperial ? `${Math.round(ac.gs)} kts` : `${Math.round(ac.gs * 1.852)} km/h`)
+      : 'unknown';
+    parts.push(speed);
+  }
+
+  if (show.route !== false) {
+    const from = ac.orig_iata || ac.orig_icao || '?';
+    const to   = ac.dest_iata || ac.dest_icao || '?';
+    if (from !== '?' || to !== '?') parts.push(`${from}→${to}`);
+  }
+
+  if (show.dir !== false && ac.lat && ac.lon && config.lat && config.lon) {
+    const bearing = calculateBearing(parseFloat(config.lat), parseFloat(config.lon), ac.lat, ac.lon);
+    parts.push(`from the ${bearing}`);
+  }
+
+  return parts.join(' · ') || '—';
+}
+
+function kmToNM(km) {
+  return Math.round(km / 1.852);
+}
+
+function isOnGround(ac) {
+  return ac.alt_baro === 'ground' || ac.alt_baro === 0 || ac.onGnd === true;
+}
+
+async function getConfig() {
+  const result = await chrome.storage.local.get(['lat', 'lon', 'radius', 'alerts', 'hideGround', 'units']);
+  return result;
+}

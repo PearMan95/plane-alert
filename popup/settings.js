@@ -1,0 +1,623 @@
+// settings.js — injecteert Settings tab HTML en beheert alle instellingen
+
+// ─── HTML INJECTIE ──────────────────────────────────────────────────────────
+
+function initSettingsTab() {
+  document.getElementById('tab-settings').innerHTML = `
+    <div id="settingsError"></div>
+
+    <!-- 📍 Location (open by default) -->
+    <div class="settings-card">
+      <button class="settings-card-toggle" data-target="cardLocation">
+        <span>📍 Location</span>
+        <span class="settings-chevron open">▼</span>
+      </button>
+      <div class="settings-card-body" id="cardLocation">
+        <div class="location-row">
+          <div class="coord-display empty" id="coordDisplay">Not set</div>
+          <button class="btn-location" id="btnLocation">📍 Detect</button>
+        </div>
+        <div class="settings-sublabel">Radius</div>
+        <div class="btn-group" id="radiusPresetBtns">
+          <button class="btn-option" data-radius="25">25 km</button>
+          <button class="btn-option active" data-radius="50">50 km</button>
+          <button class="btn-option" data-radius="100">100 km</button>
+          <button class="btn-option" data-radius="custom">Custom</button>
+        </div>
+        <div class="custom-slider-row" id="radiusCustomRow">
+          <div class="slider-header">
+            <span style="font-size:10px;color:#3a4560">Custom radius</span>
+            <span class="radius-value"><span id="radiusValue">50</span> <span id="radiusUnit">km</span></span>
+          </div>
+          <input type="range" id="radiusSlider" min="10" max="500" step="10" value="50">
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔍 Filters -->
+    <div class="settings-card">
+      <button class="settings-card-toggle" data-target="cardFilters">
+        <span>🔍 Filters</span>
+        <span class="settings-chevron">▼</span>
+      </button>
+      <div class="settings-card-body" id="cardFilters" style="display:none">
+        <div class="settings-toggle-row">
+          <div class="settings-toggle-info">
+            <div class="settings-toggle-label">Hide ground traffic</div>
+            <div class="settings-toggle-sub">Global — affects notifications &amp; Live tab</div>
+          </div>
+          <button class="alert-toggle on" id="toggleGround"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📐 Units -->
+    <div class="settings-card">
+      <button class="settings-card-toggle" data-target="cardUnits">
+        <span>📐 Units</span>
+        <span class="settings-chevron">▼</span>
+      </button>
+      <div class="settings-card-body" id="cardUnits" style="display:none">
+        <div class="btn-group">
+          <button class="btn-option active" data-units="metric">📏 Metric</button>
+          <button class="btn-option" data-units="imperial">✈️ Imperial</button>
+        </div>
+        <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:6px 0 0">Metric: km · m · km/h &nbsp;·&nbsp; Imperial: nm · ft · kts</p>
+      </div>
+    </div>
+
+    <!-- 🔔 Notifications -->
+    <div class="settings-card">
+      <button class="settings-card-toggle" data-target="cardNotifications">
+        <span>🔔 Notifications</span>
+        <span class="settings-chevron">▼</span>
+      </button>
+      <div class="settings-card-body" id="cardNotifications" style="display:none">
+        <div class="settings-toggle-row" style="margin-bottom:12px">
+          <div class="settings-toggle-info">
+            <div class="settings-toggle-label">Desktop notifications</div>
+            <div class="settings-toggle-sub">Polling continues when off</div>
+          </div>
+          <button class="alert-toggle on" id="toggleNotifications"></button>
+        </div>
+        <div class="settings-sublabel" style="margin-top:12px">Sound</div>
+        <div class="btn-group" style="margin-bottom:6px">
+          <button class="btn-option" data-sound="off">🔕 Off</button>
+          <button class="btn-option active" data-sound="ping">🔔 Ping</button>
+          <button class="btn-option" data-sound="radar">📡 Radar</button>
+          <button class="btn-option" data-sound="alert">🚨 Alert</button>
+          <button class="btn-option" data-sound="chime">🎵 Chime</button>
+        </div>
+        <div class="btn-group" id="volumeRow">
+          <button class="btn-option" data-volume="0.2">🔈 Soft</button>
+          <button class="btn-option active" data-volume="0.5">🔉 Medium</button>
+          <button class="btn-option" data-volume="1.0">🔊 Loud</button>
+          <button class="btn-option" id="btnPreviewSound" style="flex:0.8">▶ Test</button>
+        </div>
+        <div class="settings-sublabel" style="margin-top:12px">Content</div>
+        <div class="notif-builder" id="notifBuilder">
+          <div class="notif-builder-preview" id="notifPreview">
+            <div class="notif-preview-title" id="previewTitle">✈️ PH-BXA (B744) spotted!</div>
+            <div class="notif-preview-body" id="previewBody">8500m · 850 km/h · AMS→JFK · from the west</div>
+          </div>
+          <div class="notif-toggle-list">
+            <div class="notif-toggle-row">
+              <span class="notif-toggle-label">Show registration instead of callsign</span>
+              <button class="alert-toggle" id="notifToggleReg"></button>
+            </div>
+            <div class="notif-toggle-row">
+              <span class="notif-toggle-label">Aircraft type in title</span>
+              <button class="alert-toggle on" id="notifToggleType"></button>
+            </div>
+            <div class="notif-toggle-row">
+              <span class="notif-toggle-label">Altitude</span>
+              <button class="alert-toggle on" id="notifToggleAlt"></button>
+            </div>
+            <div class="notif-toggle-row">
+              <span class="notif-toggle-label">Speed</span>
+              <button class="alert-toggle on" id="notifToggleSpeed"></button>
+            </div>
+            <div class="notif-toggle-row">
+              <span class="notif-toggle-label">Route (AMS→JFK)</span>
+              <button class="alert-toggle on" id="notifToggleRoute"></button>
+            </div>
+            <div class="notif-toggle-row">
+              <span class="notif-toggle-label">Direction (from the west)</span>
+              <button class="alert-toggle on" id="notifToggleDir"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🚀 Startup tab -->
+    <div class="settings-card">
+      <button class="settings-card-toggle" data-target="cardStartup">
+        <span>🚀 Startup tab</span>
+        <span class="settings-chevron">▼</span>
+      </button>
+      <div class="settings-card-body" id="cardStartup" style="display:none">
+        <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Which tab opens when you launch the extension?</p>
+        <div class="btn-group" id="startupTabBtns">
+          <button class="btn-option" data-startup="last">Last used</button>
+          <button class="btn-option" data-startup="alerts">Alerts</button>
+          <button class="btn-option" data-startup="live">Live</button>
+          <button class="btn-option" data-startup="history">History</button>
+          <button class="btn-option" data-startup="settings">Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 💾 Backup & Test -->
+    <div class="settings-card">
+      <button class="settings-card-toggle" data-target="cardBackup">
+        <span>💾 Backup &amp; Test</span>
+        <span class="settings-chevron">▼</span>
+      </button>
+      <div class="settings-card-body" id="cardBackup" style="display:none">
+        <p style="font-family:'Space Mono',monospace;font-size:9px;color:#4b5680;margin:0 0 10px">Exports all settings including alerts, location and notifications.</p>
+        <div class="btn-group" style="margin-bottom:8px">
+          <button class="btn-option" id="btnExportAlerts" style="padding:9px">⬆️ Export backup</button>
+          <button class="btn-option" id="btnImportAlerts" style="padding:9px">⬇️ Import backup</button>
+        </div>
+        <input type="file" id="importFileInput" accept=".json" style="display:none">
+        <button class="btn-add" id="btnTestNotification" style="background:#1a2a4a;border:1px solid #2a4a8a;color:#60a5fa;">🔔 Send test notification</button>
+      </div>
+    </div>
+  `;
+  setupSettingsEvents();
+}
+
+// ─── SAVED TOAST ───────────────────────────────────────────────────────────
+
+let toastTimer = null;
+function showSaved(label = 'Saved') {
+  const toast = document.getElementById('savedToast');
+  toast.textContent = `✓ ${label}`;
+  toast.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('visible'), 1800);
+}
+
+// ─── LOCATIE ───────────────────────────────────────────────────────────────
+
+function updateCoordDisplay(lat, lon) {
+  const el     = document.getElementById('coordDisplay');
+  const latVal = parseFloat(lat);
+  const lonVal = parseFloat(lon);
+  const latDir = latVal >= 0 ? 'N' : 'S';
+  const lonDir = lonVal >= 0 ? 'E' : 'W';
+  el.textContent = `${Math.abs(latVal).toFixed(3)}°${latDir}  ${Math.abs(lonVal).toFixed(3)}°${lonDir}`;
+  el.classList.remove('empty');
+}
+
+// ─── RADIUS ────────────────────────────────────────────────────────────────
+
+let radiusSlider;
+let radiusValueEl;
+
+function kmToDisplayRadius(km, units) {
+  if (units === 'imperial') return `${Math.round(km * 0.53996)} nm`;
+  return `${km} km`;
+}
+
+function updateRadiusLabels(units) {
+  document.querySelectorAll('[data-radius]').forEach(btn => {
+    const val = btn.dataset.radius;
+    if (val !== 'custom') {
+      btn.textContent = kmToDisplayRadius(parseInt(val), units);
+    }
+  });
+  const unitEl = document.getElementById('radiusUnit');
+  if (unitEl) unitEl.textContent = units === 'imperial' ? 'nm' : 'km';
+  const valEl = document.getElementById('radiusValue');
+  if (valEl && radiusSlider) {
+    valEl.textContent = units === 'imperial'
+      ? Math.round(parseInt(radiusSlider.value) * 0.53996)
+      : radiusSlider.value;
+  }
+}
+
+function initRadiusButtons(currentRadius, units = 'metric') {
+  radiusSlider  = document.getElementById('radiusSlider');
+  radiusValueEl = document.getElementById('radiusValue');
+
+  const presets  = [25, 50, 100];
+  const isCustom = !presets.includes(currentRadius);
+
+  document.querySelectorAll('[data-radius]').forEach(btn => {
+    const val = btn.dataset.radius;
+    btn.classList.toggle('active', val === 'custom' ? isCustom : parseInt(val) === currentRadius);
+  });
+
+  document.getElementById('radiusCustomRow').classList.toggle('visible', isCustom);
+  if (isCustom) {
+    radiusSlider.value = currentRadius;
+    radiusValueEl.textContent = units === 'imperial'
+      ? Math.round(currentRadius * 0.53996)
+      : currentRadius;
+  }
+
+  updateRadiusLabels(units);
+}
+
+// ─── EVENTS ────────────────────────────────────────────────────────────────
+
+function setupSettingsEvents() {
+
+  // ── Card dropdowns ────────────────────────────────────────────────────────
+  document.querySelectorAll('.settings-card-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const body    = document.getElementById(btn.dataset.target);
+      const chevron = btn.querySelector('.settings-chevron');
+      const isOpen  = body.style.display !== 'none';
+      body.style.display      = isOpen ? 'none' : 'block';
+      chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+      chevron.classList.toggle('open', !isOpen);
+    });
+  });
+
+  // Locatie detecteren
+  document.getElementById('btnLocation').addEventListener('click', () => {
+    const errorEl = document.getElementById('settingsError');
+    errorEl.innerHTML = '';
+
+    if (!navigator.geolocation) {
+      errorEl.innerHTML = '<div class="error-message">Geolocation is not available in this browser.</div>';
+      return;
+    }
+
+    const btn = document.getElementById('btnLocation');
+    btn.textContent = '⏳ Detecting...';
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude.toFixed(5);
+        const lon = pos.coords.longitude.toFixed(5);
+        await chrome.storage.local.set({ lat, lon });
+        updateCoordDisplay(lat, lon);
+        btn.textContent = '📍 Detect';
+        showSaved('Location');
+        updateStatus();
+        chrome.runtime.sendMessage({ type: 'pollNow' }).catch(() => {});
+      },
+      (err) => {
+        btn.textContent = '📍 Detect';
+        errorEl.innerHTML = `<div class="error-message">Failed to get location: ${err.message}<br>Make sure you have granted permission.</div>`;
+      },
+      { timeout: 10000 }
+    );
+  });
+
+  // Radius knoppen
+  document.querySelectorAll('[data-radius]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const val = btn.dataset.radius;
+      document.querySelectorAll('[data-radius]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (val === 'custom') {
+        const { radius = 50 } = await chrome.storage.local.get('radius');
+        document.getElementById('radiusCustomRow').classList.add('visible');
+        radiusSlider.value = radius;
+        const { units = 'metric' } = await chrome.storage.local.get('units');
+        radiusValueEl.textContent = units === 'imperial'
+          ? Math.round(radius * 0.53996)
+          : radius;
+      } else {
+        await chrome.storage.local.set({ radius: parseInt(val) });
+        document.getElementById('radiusCustomRow').classList.remove('visible');
+        showSaved('Radius');
+      }
+    });
+  });
+
+  document.getElementById('radiusSlider').addEventListener('input', async () => {
+    const { units = 'metric' } = await chrome.storage.local.get('units');
+    radiusValueEl.textContent = units === 'imperial'
+      ? Math.round(parseInt(radiusSlider.value) * 0.53996)
+      : radiusSlider.value;
+  });
+  document.getElementById('radiusSlider').addEventListener('change', () => {
+    chrome.storage.local.set({ radius: parseInt(radiusSlider.value) });
+    showSaved('Radius');
+  });
+}
+
+// ─── INSTELLINGEN HERLADEN (na backup import) ──────────────────────────────
+
+async function loadSettings() {
+  // Onthoud welke kaarten open waren voor we de HTML herinjekten
+  const openCards = [];
+  document.querySelectorAll('.settings-card-body').forEach(body => {
+    if (body.style.display !== 'none') openCards.push(body.id);
+  });
+
+  initSettingsTab();
+
+  const { lat, lon, radius = 50, units = 'metric' } =
+    await chrome.storage.local.get(['lat', 'lon', 'radius', 'units']);
+  if (lat && lon) updateCoordDisplay(lat, lon);
+  initRadiusButtons(radius, units);
+  await initSettings();
+
+  // Herstel open kaarten
+  openCards.forEach(id => {
+    const body = document.getElementById(id);
+    if (body) {
+      body.style.display = 'block';
+      const toggle = body.previousElementSibling;
+      if (toggle) {
+        const chevron = toggle.querySelector('.settings-chevron');
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+      }
+    }
+  });
+}
+
+// ─── INSTELLINGEN LADEN (geroepen vanuit popup.js) ─────────────────────────
+
+async function initSettings() {
+  const { hideGround = true, notificationsEnabled = true, notifShow, units = 'metric' } =
+    await chrome.storage.local.get(['hideGround', 'notificationsEnabled', 'notifShow', 'units']);
+
+  // Ground toggle
+  const toggleGround = document.getElementById('toggleGround');
+  toggleGround.className = `alert-toggle ${hideGround ? 'on' : ''}`;
+  toggleGround.addEventListener('click', async () => {
+    const { hideGround: cur = true } = await chrome.storage.local.get('hideGround');
+    const newVal = !cur;
+    await chrome.storage.local.set({ hideGround: newVal });
+    toggleGround.className = `alert-toggle ${newVal ? 'on' : ''}`;
+    showSaved('Filter');
+  });
+
+  // Units knoppen
+  document.querySelectorAll('[data-units]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.units === units);
+  });
+
+  document.querySelectorAll('[data-units]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const newUnits = btn.dataset.units;
+      await chrome.storage.local.set({ units: newUnits });
+      document.querySelectorAll('[data-units]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateRadiusLabels(newUnits);
+      updateNotifPreview();
+      showSaved('Units');
+    });
+  });
+
+  // Notificaties toggle
+  const toggleNotifications = document.getElementById('toggleNotifications');
+
+  function applyNotifEnabled(val) {
+    toggleNotifications.className = `alert-toggle ${val ? 'on' : ''}`;
+  }
+
+  applyNotifEnabled(notificationsEnabled);
+  toggleNotifications.addEventListener('click', async () => {
+    const { notificationsEnabled: cur = true } = await chrome.storage.local.get('notificationsEnabled');
+    const newVal = !cur;
+    await chrome.storage.local.set({ notificationsEnabled: newVal });
+    applyNotifEnabled(newVal);
+    showSaved('Notifications');
+  });
+
+  // Geluid knoppen
+  const { alertSound = 'ping', alertVolume = 0.5 } =
+    await chrome.storage.local.get(['alertSound', 'alertVolume']);
+
+  function initSoundButtons(currentSound, currentVolume) {
+    document.querySelectorAll('[data-sound]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.sound === currentSound);
+    });
+    const volumeRow = document.getElementById('volumeRow');
+    volumeRow.style.opacity       = currentSound === 'off' ? '0.35' : '1';
+    volumeRow.style.pointerEvents = currentSound === 'off' ? 'none'  : '';
+    document.querySelectorAll('[data-volume]').forEach(btn => {
+      btn.classList.toggle('active', parseFloat(btn.dataset.volume) === currentVolume);
+    });
+  }
+
+  initSoundButtons(alertSound, alertVolume);
+
+  document.querySelectorAll('[data-sound]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const sound = btn.dataset.sound;
+      await chrome.storage.local.set({ alertSound: sound });
+      document.querySelectorAll('[data-sound]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const volumeRow = document.getElementById('volumeRow');
+      volumeRow.style.opacity       = sound === 'off' ? '0.35' : '1';
+      volumeRow.style.pointerEvents = sound === 'off' ? 'none'  : '';
+      showSaved('Sound');
+      if (sound !== 'off') previewSound(sound);
+    });
+  });
+
+  document.querySelectorAll('[data-volume]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const vol = parseFloat(btn.dataset.volume);
+      await chrome.storage.local.set({ alertVolume: vol });
+      document.querySelectorAll('[data-volume]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      showSaved('Volume');
+      const { alertSound: s = 'ping' } = await chrome.storage.local.get('alertSound');
+      if (s !== 'off') previewSound(s, vol);
+    });
+  });
+
+  document.getElementById('btnPreviewSound').addEventListener('click', async () => {
+    const { alertSound: s = 'ping', alertVolume: v = 0.5 } =
+      await chrome.storage.local.get(['alertSound', 'alertVolume']);
+    if (s !== 'off') previewSound(s, v);
+  });
+
+  // Notificatie content builder
+  const defaultShow = { reg: false, type: true, alt: true, speed: true, route: true, dir: true };
+  const show = Object.assign({}, defaultShow, notifShow);
+
+  async function updateNotifPreview() {
+    const { units: u = 'metric' } = await chrome.storage.local.get('units');
+    const id    = show.reg ? 'PH-BXA' : 'KL1234';
+    const type  = show.type ? ` (B744)` : '';
+    const title = `✈️ ${id}${type} spotted!`;
+    const parts = [];
+    if (show.alt)   parts.push(u === 'imperial' ? '27900 ft' : '8500 m');
+    if (show.speed) parts.push(u === 'imperial' ? '459 kts'  : '850 km/h');
+    if (show.route) parts.push('AMS→JFK');
+    if (show.dir)   parts.push('from the west');
+    document.getElementById('previewTitle').textContent = title;
+    document.getElementById('previewBody').textContent  = parts.length ? parts.join(' · ') : '(no details)';
+  }
+
+  function makeNotifToggle(id, key) {
+    const btn = document.getElementById(id);
+    btn.className = `alert-toggle ${show[key] ? 'on' : ''}`;
+    btn.addEventListener('click', async () => {
+      show[key] = !show[key];
+      btn.className = `alert-toggle ${show[key] ? 'on' : ''}`;
+      await chrome.storage.local.set({ notifShow: { ...show } });
+      updateNotifPreview();
+      showSaved('Notification content');
+    });
+  }
+
+  makeNotifToggle('notifToggleReg',   'reg');
+  makeNotifToggle('notifToggleType',  'type');
+  makeNotifToggle('notifToggleAlt',   'alt');
+  makeNotifToggle('notifToggleSpeed', 'speed');
+  makeNotifToggle('notifToggleRoute', 'route');
+  makeNotifToggle('notifToggleDir',   'dir');
+  updateNotifPreview();
+
+  // ── Startup tab ──────────────────────────────────────────────────────────
+
+  const { startupTab = 'last' } = await chrome.storage.local.get('startupTab');
+
+  document.querySelectorAll('[data-startup]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.startup === startupTab);
+  });
+
+  document.querySelectorAll('[data-startup]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await chrome.storage.local.set({ startupTab: btn.dataset.startup });
+      document.querySelectorAll('[data-startup]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      showSaved('Startup tab');
+    });
+  });
+
+  // ── Backup export / import ───────────────────────────────────────────────
+
+  const BACKUP_KEYS = [
+    'alerts', 'lat', 'lon', 'radius', 'units',
+    'hideGround', 'notificationsEnabled', 'notifShow',
+    'alertSound', 'alertVolume',
+    'startupTab', 'lastTab',
+    'caughtAircraft', 'caughtAircraftLabels'
+  ];
+
+  document.getElementById('btnExportAlerts').addEventListener('click', async () => {
+    const data   = await chrome.storage.local.get(BACKUP_KEYS);
+    const backup = { version: 2, exportedAt: new Date().toISOString(), ...data };
+    const blob   = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url    = URL.createObjectURL(blob);
+    const a      = document.createElement('a');
+    a.href       = url;
+    a.download   = `planealert-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('btnImportAlerts').addEventListener('click', () => {
+    document.getElementById('importFileInput').click();
+  });
+
+  document.getElementById('importFileInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const btn = document.getElementById('btnImportAlerts');
+    try {
+      const backup   = JSON.parse(await file.text());
+      const isLegacy = Array.isArray(backup);
+      const data     = isLegacy ? { alerts: backup } : backup;
+      if (!isLegacy && typeof data !== 'object') throw new Error('Invalid format');
+
+      const toStore = {};
+      for (const key of BACKUP_KEYS) {
+        if (data[key] !== undefined) toStore[key] = data[key];
+      }
+      if (toStore.alerts) {
+        toStore.alerts = toStore.alerts.map(a => ({ ...a, id: Date.now().toString() + Math.random() }));
+      }
+
+      await chrome.storage.local.set(toStore);
+      if (typeof renderAlerts === 'function') {
+        const { alerts = [] } = await chrome.storage.local.get('alerts');
+        renderAlerts(alerts);
+      }
+      await loadSettings();
+
+      btn.textContent = isLegacy ? `✓ ${toStore.alerts?.length ?? 0} alerts` : '✓ Backup loaded';
+    } catch {
+      btn.textContent = '✗ Invalid file';
+    }
+    setTimeout(() => { btn.textContent = '⬇️ Import backup'; }, 2500);
+    e.target.value = '';
+  });
+
+  // ── Test notificatie
+  document.getElementById('btnTestNotification').addEventListener('click', async () => {
+    const btn = document.getElementById('btnTestNotification');
+    btn.textContent = '✓ Sent!';
+    setTimeout(() => { btn.textContent = '🔔 Send test notification'; }, 2000);
+
+    const { notifShow: ns, units: u = 'metric' } =
+      await chrome.storage.local.get(['notifShow', 'units']);
+    const s = Object.assign({}, defaultShow, ns);
+    const parts = [];
+    if (s.alt)   parts.push(u === 'imperial' ? '27900 ft' : '8500 m');
+    if (s.speed) parts.push(u === 'imperial' ? '459 kts'  : '850 km/h');
+    if (s.route) parts.push('AMS→JFK');
+    if (s.dir)   parts.push('from the west');
+
+    chrome.notifications.create(`test_${Date.now()}`, {
+      type:    'basic',
+      iconUrl: '../icons/icon128.png',
+      title:   `✈️ ${s.reg ? 'PH-TEST' : 'PHTEST1'}${s.type ? ' (B744)' : ''} spotted!`,
+      message: parts.join(' · ') || '—',
+      buttons: [{ title: '🗺️ View on map' }]
+    });
+  });
+}
+
+// ─── GELUID PREVIEW ────────────────────────────────────────────────────────
+
+function previewSound(sound, volume) {
+  const ctx = new AudioContext();
+  const vol = volume ?? 0.5;
+
+  function tone(freq, start, dur, type = 'sine') {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(vol, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+    osc.start(start);
+    osc.stop(start + dur + 0.05);
+  }
+
+  const t = ctx.currentTime;
+  switch (sound) {
+    case 'ping':  tone(880, t, 0.4); break;
+    case 'radar': tone(440, t, 0.25); tone(660, t + 0.3, 0.25); break;
+    case 'alert': tone(523, t, 0.15, 'square'); tone(659, t + 0.18, 0.15, 'square'); tone(784, t + 0.36, 0.25, 'square'); break;
+    case 'chime': tone(523, t, 0.6); tone(659, t + 0.15, 0.6); tone(784, t + 0.30, 0.8); break;
+  }
+}

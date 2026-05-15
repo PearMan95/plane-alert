@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plane Alert — Goodbye!</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@400;600;800&display=swap">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #08090f;
+      --surface: #0f1322;
+      --border: #1e2840;
+      --blue: #60a5fa;
+      --green: #22c55e;
+      --muted: #4b5680;
+      --text: #e8e4f0;
+      --subtext: #8b9cc8;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      overflow: hidden;
+    }
+
+    /* Animated radar background */
+    .radar-bg {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0.06;
+    }
+
+    .radar-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid var(--blue);
+      animation: expand 4s ease-out infinite;
+    }
+    .radar-ring:nth-child(1) { width: 200px; height: 200px; animation-delay: 0s; }
+    .radar-ring:nth-child(2) { width: 400px; height: 400px; animation-delay: 1s; }
+    .radar-ring:nth-child(3) { width: 600px; height: 600px; animation-delay: 2s; }
+    .radar-ring:nth-child(4) { width: 800px; height: 800px; animation-delay: 3s; }
+
+    @keyframes expand {
+      0%   { opacity: 0.8; transform: scale(0.9); }
+      100% { opacity: 0;   transform: scale(1.1); }
+    }
+
+    /* Floating planes */
+    .plane {
+      position: fixed;
+      font-size: 1.4rem;
+      animation: fly linear infinite;
+      opacity: 0.15;
+    }
+    .plane:nth-child(1) { top: 15%; animation-duration: 18s; animation-delay: 0s; }
+    .plane:nth-child(2) { top: 40%; animation-duration: 24s; animation-delay: -6s; font-size: 1rem; }
+    .plane:nth-child(3) { top: 65%; animation-duration: 20s; animation-delay: -12s; }
+    .plane:nth-child(4) { top: 80%; animation-duration: 28s; animation-delay: -4s; font-size: 0.9rem; }
+
+    @keyframes fly {
+      from { left: -5%; }
+      to   { left: 105%; }
+    }
+
+    /* Card */
+    .card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3rem 3.5rem;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .emoji {
+      font-size: 4rem;
+      display: block;
+      margin-bottom: 1.2rem;
+      animation: wiggle 2s ease-in-out infinite;
+    }
+
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(-5deg); }
+      50%       { transform: rotate(5deg); }
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 span { color: var(--blue); }
+
+    .subtitle {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+      letter-spacing: 0.5px;
+    }
+
+    .message {
+      font-size: 1rem;
+      color: var(--subtext);
+      line-height: 1.75;
+      margin-bottom: 2rem;
+    }
+
+    .message strong { color: var(--text); }
+
+    /* Radar blip — "last seen" */
+    .last-seen {
+      background: #0a0c14;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .blip {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; box-shadow: 0 0 6px #22c55e88; }
+      50%       { opacity: 0.3; box-shadow: none; }
+    }
+
+    .last-seen-text { text-align: left; line-height: 1.6; }
+    .last-seen-text span { color: var(--blue); }
+
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-direction: column;
+    }
+
+    .btn {
+      display: block;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: all 0.15s;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: #1a3a6a;
+      border: 1px solid #2a4a8a;
+      color: var(--blue);
+    }
+    .btn-primary:hover { background: #1e4278; }
+
+    .btn-secondary {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-secondary:hover { border-color: #2a3860; color: var(--subtext); }
+
+    .footer {
+      margin-top: 2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      color: #2a3060;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="radar-bg">
+    <div class="radar-ring"></div>
+    <div class="radar-ring"></div>
+    <div class="radar-ring"></div>
+    <div class="radar-ring"></div>
+  </div>
+
+  <div class="plane">✈️</div>
+  <div class="plane">✈️</div>
+  <div class="plane">✈️</div>
+  <div class="plane">✈️</div>
+
+  <div class="card">
+    <span class="emoji">📡</span>
+    <h1>Plane<span>Alert</span> says goodbye</h1>
+    <p class="subtitle">SIGNAL LOST // CONNECTION TERMINATED</p>
+
+    <p class="message">
+      Well, that hurts a little. Somewhere out there, a <strong>Boeing 747</strong> just flew over your house and nobody got notified. Hope you're happy with yourself.
+    </p>
+
+    <div class="last-seen">
+      <div class="blip"></div>
+      <div class="last-seen-text">
+        Last radar contact: <span>unknown</span><br>
+        Tracked aircraft: <span>0 (and counting)</span><br>
+        Status: <span>Offline. Obviously.</span>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <a href="https://chrome.google.com/webstore" class="btn btn-primary">
+        ↩️ Wait, I changed my mind
+      </a>
+      <a href="https://github.com/PearMan95/plane-alert/issues" target="_blank" class="btn btn-secondary">
+        🐛 Something was broken — let me report it
+      </a>
+      <a href="https://ko-fi.com/F2F31W8JHG" target="_blank" class="btn btn-secondary">
+        ☕ Buy me a coffee anyway
+      </a>
+    </div>
+
+    <p class="footer">Thanks for flying with Plane Alert. Safe travels. ✈️</p>
+  </div>
+
+</body>
+</html>

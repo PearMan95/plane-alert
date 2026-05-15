@@ -1,0 +1,18 @@
+# ── Backups & archives ──
+planealert-backup-*.json
+*.zip
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor ──
+.vscode/
+.idea/
+
+# ── Logs ──
+*.log
+
+# ── Node (voor als je ooit een build tool toevoegt) ──
+node_modules/
