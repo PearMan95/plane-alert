@@ -86,9 +86,9 @@ plane-alert/
 
 ## Roadmap
 
-- [ ] Statistics — all-time counters, most seen aircraft types
-- [ ] Multiple locations (e.g. home and work)
-- [ ] Chrome Web Store release (?)
+- Statistics — all-time counters, most seen aircraft types
+- Multiple locations (e.g. home and work)
+- Chrome Web Store release (?)
 
 ---
 
